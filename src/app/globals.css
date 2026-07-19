@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Loaded ONLY by the admin layout — the public site keeps its legacy CSS
+   untouched, so Tailwind's preflight never touches the original design. */
+
+@theme {
+  --color-brand-50: #f4f1fb;
+  --color-brand-100: #e9e2f8;
+  --color-brand-200: #d4c8f1;
+  --color-brand-300: #b5a0e6;
+  --color-brand-400: #9377d8;
+  --color-brand-500: #7857c8;
+  --color-brand-600: #5d3fb8;
+  --color-brand-700: #4c339a;
+  --color-brand-800: #3e2b7c;
+  --color-brand-900: #322464;
+}
+
+body {
+  @apply bg-zinc-100 text-zinc-900 antialiased;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    sans-serif;
+}

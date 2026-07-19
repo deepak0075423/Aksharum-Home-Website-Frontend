@@ -1,0 +1,463 @@
+/* ════════════════════════════════════════════════════════════════════════
+   AKSHARUM — LIQUID GLASS DESIGN LAYER
+   Loaded AFTER each page stylesheet. Purely additive: re-skins the shared
+   chrome (nav, drawer, buttons) and the main cards/panels of every page
+   with a translucent "liquid glass" material — backdrop blur + saturation,
+   specular top highlight, frosted borders — in light and dark themes.
+   Remove this one <link> to restore the previous flat design.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --lg-bg: rgba(255,255,255,.62);
+  --lg-bg-strong: rgba(255,255,255,.74);
+  --lg-bg-soft: rgba(255,255,255,.45);
+  --lg-border: rgba(255,255,255,.85);
+  --lg-edge: rgba(93,63,184,.12);
+  --lg-shadow: 0 12px 40px rgba(37,21,82,.12);
+  --lg-highlight: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -1px 0 rgba(255,255,255,.25);
+  --lg-blur: 22px;
+  --lg-sat: 175%;
+}
+html[data-theme="dark"]{
+  --lg-bg: rgba(30,22,52,.55);
+  --lg-bg-strong: rgba(26,19,44,.72);
+  --lg-bg-soft: rgba(255,255,255,.06);
+  --lg-border: rgba(222,210,255,.22);
+  --lg-edge: rgba(199,179,255,.10);
+  --lg-shadow: 0 12px 44px rgba(0,0,0,.42);
+  --lg-highlight: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(255,255,255,.04);
+}
+
+/* ── The reusable material ─────────────────────────────────────────────── */
+nav,
+.mobile-drawer,
+.dash,.notif-chip,.enroll-chip,
+.pcard,.fg-card,.tcard2,.t-badge,
+.sv-sec-card,.sv-pillar-card,.sv-prob-item,
+.db-chip,
+.fcard,.demo-card,.map-pin-card,
+.wnt-card,.dm-card,.slots-box,
+.cr-why-card,.cr-form-wrap,.cr-file-box,
+.toc,.intro-box,.contact-card,
+.page > .card{
+  background: var(--lg-bg);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+  box-shadow: var(--lg-highlight), 0 0 0 1px var(--lg-edge), var(--lg-shadow);
+}
+
+/* ── Navbar: full-width glass bar ──────────────────────────────────────── */
+nav{
+  background: var(--lg-bg);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+nav.scrolled{
+  background: var(--lg-bg-strong);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 8px 32px rgba(37,21,82,.10);
+}
+html[data-theme="dark"] nav{
+  background: rgba(15,10,28,.55);
+  border-bottom: 1px solid rgba(222,210,255,.10);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+html[data-theme="dark"] nav.scrolled{
+  background: rgba(15,10,28,.74);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 36px rgba(0,0,0,.4);
+}
+.nlinks a.active{
+  background: var(--lg-bg-strong);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 1px var(--lg-edge);
+}
+html[data-theme="dark"] .nlinks a.active{
+  background: rgba(199,179,255,.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12);
+}
+
+/* small round controls become glass capsules */
+.theme-toggle,.nav-toggle,.drawer-close,.drawer-theme-toggle{
+  background: var(--lg-bg-soft);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--lg-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+html[data-theme="dark"] .theme-toggle,
+html[data-theme="dark"] .nav-toggle,
+html[data-theme="dark"] .drawer-close,
+html[data-theme="dark"] .drawer-theme-toggle{
+  background: rgba(255,255,255,.07);
+  border-color: rgba(222,210,255,.20);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+}
+
+/* ── Mobile drawer: tall glass sheet ───────────────────────────────────── */
+.mobile-drawer{
+  background: rgba(255,255,255,.72);
+  -webkit-backdrop-filter: blur(34px) saturate(180%);
+  backdrop-filter: blur(34px) saturate(180%);
+  border-left: 1px solid var(--lg-border);
+}
+.drawer-head{background: transparent; border-bottom-color: var(--lg-edge)}
+/* Normalized glass pills — every page ships its own drawer CSS with
+   different radii/colors, so pin the look here with .mobile-drawer
+   specificity and lavender (not white) borders that stay visible no
+   matter what shows through the glass behind the drawer. */
+.mobile-drawer .drawer-links a{
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,.5);
+  border: 1px solid rgba(93,63,184,.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+.mobile-drawer .drawer-links a:hover,
+.mobile-drawer .drawer-links a.active{
+  background: rgba(124,95,214,.12);
+  border-color: rgba(93,63,184,.30);
+  color: var(--p700);
+}
+.mobile-drawer .drawer-theme-toggle{
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: rgba(255,255,255,.5);
+  border: 1px solid rgba(93,63,184,.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+  margin-bottom: 12px;
+}
+.mobile-drawer .drawer-demo{border-radius: 14px}
+html[data-theme="dark"] .mobile-drawer{
+  background: rgba(15,10,28,.68);
+  border-left-color: rgba(222,210,255,.16);
+}
+html[data-theme="dark"] .drawer-head,
+html[data-theme="dark"] .drawer-links,
+html[data-theme="dark"] .drawer-bottom{background: transparent}
+html[data-theme="dark"] .mobile-drawer .drawer-links a{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(222,210,255,.18);
+  color: var(--ink, #fbf8ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+html[data-theme="dark"] .mobile-drawer .drawer-links a:hover,
+html[data-theme="dark"] .mobile-drawer .drawer-links a.active{
+  background: rgba(199,179,255,.14);
+  border-color: rgba(199,179,255,.32);
+  color: var(--p700, #c7b3ff);
+}
+html[data-theme="dark"] .mobile-drawer .drawer-theme-toggle{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(222,210,255,.18);
+  color: var(--ink, #fbf8ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.nav-overlay{
+  background: rgba(20,14,35,.38);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+/* ── Tinted glass buttons (brand purple) ───────────────────────────────── */
+.n-demo,.drawer-demo,.btn-feat-know{
+  background: linear-gradient(135deg, rgba(124,95,214,.92), rgba(93,63,184,.88));
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
+  border: 1px solid rgba(255,255,255,.38);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 8px 26px rgba(93,63,184,.32);
+}
+.n-demo:hover,.drawer-demo:hover,.btn-feat-know:hover{
+  background: linear-gradient(135deg, rgba(124,95,214,1), rgba(93,63,184,.96));
+}
+.btn-ghost{
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+}
+
+/* ── Page-specific fine tuning ─────────────────────────────────────────── */
+/* index hero dashboard reads as a frosted widget over the animated blob */
+.dash{background: var(--lg-bg-strong)}
+.dsc{
+  background: var(--lg-bg-soft);
+  border: 1px solid var(--lg-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+html[data-theme="dark"] .dash{background: rgba(26,19,44,.72)}
+html[data-theme="dark"] .dsc{
+  background: rgba(255,255,255,.06);
+  border-color: rgba(222,210,255,.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+.pain-row{
+  background: var(--lg-bg-soft);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+}
+html[data-theme="dark"] .pain-row{
+  background: rgba(255,255,255,.05);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+/* cards that already sit on purple gradients: subtle translucent frost,
+   brighter edges — NOT the opaque light material (which turns milky here) */
+.sc,.tcard,.mva-card{
+  background: rgba(255,255,255,.09);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+  border: 1px solid rgba(255,255,255,.24);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 16px 44px rgba(0,0,0,.22);
+}
+.mva-card:hover{
+  background: rgba(255,255,255,.15);
+  border-color: rgba(255,255,255,.38);
+}
+/* eyebrow label needs more punch on the frosted glass */
+.mva-tag{color: rgba(255,255,255,.72)}
+/* ambient colour washes so glass has something to refract on white sections */
+.prob-sec{background:
+  radial-gradient(640px 420px at 88% 10%, rgba(157,131,230,.13), transparent 62%),
+  radial-gradient(560px 400px at 6% 90%, rgba(93,63,184,.09), transparent 60%),
+  #faf9ff}
+.feat-sec{background:
+  radial-gradient(600px 420px at 10% 12%, rgba(157,131,230,.12), transparent 62%),
+  radial-gradient(620px 440px at 92% 86%, rgba(93,63,184,.10), transparent 60%),
+  #faf9ff}
+.testi-sec{background:
+  radial-gradient(600px 400px at 90% 8%, rgba(157,131,230,.12), transparent 60%),
+  radial-gradient(520px 380px at 8% 92%, rgba(93,63,184,.08), transparent 58%),
+  var(--p50)}
+html[data-theme="dark"] .prob-sec,
+html[data-theme="dark"] .feat-sec{background:
+  radial-gradient(640px 420px at 88% 10%, rgba(124,95,214,.16), transparent 62%),
+  radial-gradient(560px 400px at 6% 90%, rgba(199,179,255,.08), transparent 60%),
+  #0f0a1c}
+html[data-theme="dark"] .testi-sec{background:
+  radial-gradient(600px 400px at 90% 8%, rgba(124,95,214,.15), transparent 60%),
+  radial-gradient(520px 380px at 8% 92%, rgba(199,179,255,.07), transparent 58%),
+  #0f0a1c}
+
+/* footer: specular hairline on top */
+footer{box-shadow: inset 0 1px 0 rgba(255,255,255,.10)}
+
+/* dark-theme card variants (page CSS dark rules are more specific,
+   so restate the material) */
+html[data-theme="dark"] .pcard,
+html[data-theme="dark"] .fg-card,
+html[data-theme="dark"] .tcard2,
+html[data-theme="dark"] .t-badge,
+html[data-theme="dark"] .notif-chip,
+html[data-theme="dark"] .enroll-chip,
+html[data-theme="dark"] .sv-sec-card,
+html[data-theme="dark"] .sv-pillar-card,
+html[data-theme="dark"] .sv-prob-item,
+html[data-theme="dark"] .db-chip,
+html[data-theme="dark"] .fcard,
+html[data-theme="dark"] .demo-card,
+html[data-theme="dark"] .map-pin-card,
+html[data-theme="dark"] .wnt-card,
+html[data-theme="dark"] .dm-card,
+html[data-theme="dark"] .slots-box,
+html[data-theme="dark"] .cr-why-card,
+html[data-theme="dark"] .cr-form-wrap,
+html[data-theme="dark"] .cr-file-box,
+html[data-theme="dark"] .toc,
+html[data-theme="dark"] .intro-box,
+html[data-theme="dark"] .contact-card{
+  background: var(--lg-bg);
+  border-color: var(--lg-border);
+  box-shadow: var(--lg-highlight), 0 0 0 1px var(--lg-edge), var(--lg-shadow);
+}
+
+/* ── Guardrails ────────────────────────────────────────────────────────── */
+/* lighter blur on phones — dozens of backdrop-filters get expensive */
+@media (max-width:768px){
+  :root{--lg-blur:14px}
+}
+/* no backdrop-filter support → nearly opaque surfaces stay readable */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  :root{
+    --lg-bg: rgba(255,255,255,.94);
+    --lg-bg-strong: rgba(255,255,255,.97);
+    --lg-bg-soft: rgba(250,248,255,.96);
+  }
+  html[data-theme="dark"]{
+    --lg-bg: rgba(23,17,38,.96);
+    --lg-bg-strong: rgba(23,17,38,.98);
+    --lg-bg-soft: rgba(33,23,53,.96);
+  }
+}
+/* user prefers less transparency → give them solid surfaces */
+@media (prefers-reduced-transparency: reduce){
+  :root{
+    --lg-bg:#fff; --lg-bg-strong:#fff; --lg-bg-soft:#faf8ff;
+  }
+  html[data-theme="dark"]{
+    --lg-bg:#171126; --lg-bg-strong:#171126; --lg-bg-soft:#211735;
+  }
+  nav,.mobile-drawer,.nav-overlay{
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   LIQUID GLASS — ROUND 2
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Frosted texture + specular sheen on major glass surfaces ─────────── */
+nav,.mobile-drawer,.dash,
+.pcard,.fg-card,.tcard2,
+.mva-card,.sv-sec-card,.sv-pillar-card,.wnt-card,
+.cr-why-card,.toc,.intro-box,.contact-card,.fcard,.demo-card,
+.page > .card{
+  background-image:
+    linear-gradient(118deg, rgba(255,255,255,.20), rgba(255,255,255,0) 42%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.028'/%3E%3C/svg%3E");
+}
+html[data-theme="dark"] nav,
+html[data-theme="dark"] .mobile-drawer,
+html[data-theme="dark"] .dash,
+html[data-theme="dark"] .pcard,
+html[data-theme="dark"] .fg-card,
+html[data-theme="dark"] .tcard2,
+html[data-theme="dark"] .mva-card,
+html[data-theme="dark"] .sv-sec-card,
+html[data-theme="dark"] .sv-pillar-card,
+html[data-theme="dark"] .wnt-card,
+html[data-theme="dark"] .cr-why-card,
+html[data-theme="dark"] .toc,
+html[data-theme="dark"] .intro-box,
+html[data-theme="dark"] .contact-card,
+html[data-theme="dark"] .fcard,
+html[data-theme="dark"] .demo-card,
+html[data-theme="dark"] .page > .card{
+  background-image:
+    linear-gradient(118deg, rgba(255,255,255,.06), rgba(255,255,255,0) 42%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+}
+
+/* ── Glare sweep across primary buttons on hover ───────────────────────── */
+.n-demo,.drawer-demo,.btn-feat-know,.btn-white{position:relative;overflow:hidden}
+.n-demo::after,.drawer-demo::after,.btn-feat-know::after,.btn-white::after{
+  content:'';position:absolute;top:0;left:-130%;width:70%;height:100%;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,.38), transparent);
+  transform:skewX(-20deg);
+  transition:left .55s ease;
+  pointer-events:none;
+}
+.n-demo:hover::after,.drawer-demo:hover::after,
+.btn-feat-know:hover::after,.btn-white:hover::after{left:150%}
+
+/* ── FAQ: one cohesive glass panel, rows stay flat inside ──────────────── */
+#faqList{
+  background: var(--lg-bg);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+  backdrop-filter: blur(var(--lg-blur)) saturate(var(--lg-sat));
+  border: 1px solid var(--lg-border);
+  box-shadow: var(--lg-highlight), 0 0 0 1px var(--lg-edge), var(--lg-shadow);
+  border-radius: 22px;
+  padding: 8px 28px;
+}
+html[data-theme="dark"] #faqList{
+  background: var(--lg-bg);
+  border-color: var(--lg-border);
+}
+details.faq-item:last-of-type{border-bottom:none}
+
+/* ── Glass form fields (demo, contact, career, auth) ───────────────────── */
+.dm-field input,.dm-field select,.dm-field textarea,
+.ff input,.ff select,.ff textarea,
+.cr-fi,
+.field input{
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(93,63,184,.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+.dm-field input:focus,.dm-field select:focus,.dm-field textarea:focus,
+.ff input:focus,.ff select:focus,.ff textarea:focus,
+.cr-fi:focus,
+.field input:focus{
+  background: var(--lg-bg-strong);
+  border-color: var(--p500);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 0 0 4px rgba(124,95,214,.14);
+}
+html[data-theme="dark"] .dm-field input,
+html[data-theme="dark"] .dm-field select,
+html[data-theme="dark"] .dm-field textarea,
+html[data-theme="dark"] .ff input,
+html[data-theme="dark"] .ff select,
+html[data-theme="dark"] .ff textarea,
+html[data-theme="dark"] .cr-fi,
+html[data-theme="dark"] .field input{
+  background: rgba(255,255,255,.06);
+  border-color: var(--lg-border);
+  color: var(--ink, #fbf8ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+}
+html[data-theme="dark"] .dm-field input:focus,
+html[data-theme="dark"] .dm-field select:focus,
+html[data-theme="dark"] .dm-field textarea:focus,
+html[data-theme="dark"] .ff input:focus,
+html[data-theme="dark"] .ff select:focus,
+html[data-theme="dark"] .ff textarea:focus,
+html[data-theme="dark"] .cr-fi:focus,
+html[data-theme="dark"] .field input:focus{
+  background: rgba(255,255,255,.10);
+  border-color: var(--p500);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 4px rgba(157,131,230,.18);
+}
+
+/* ── Auth page dark mode (auth.css has no dark rules; scoped to .page) ── */
+html[data-theme="dark"] .page{
+  --ink:#fbf8ff; --ink2:#ded6f3; --ink3:#a99dc2;
+  --line:rgba(222,210,255,.16); --bg:#0f0a1c;
+  background:#0f0a1c;
+}
+html[data-theme="dark"] body:has(> .page){background:#0f0a1c}
+html[data-theme="dark"] .page .btn-google{
+  background:rgba(255,255,255,.06); color:var(--ink); border-color:var(--line);
+}
+html[data-theme="dark"] .page .btn-google:hover{background:rgba(199,179,255,.12)}
+html[data-theme="dark"] .page .magic-ring{
+  background:rgba(199,179,255,.12); border-color:rgba(199,179,255,.3);
+}
+
+/* ── Smooth cross-page transitions (JS-assisted crossfade) ─────────────── */
+/* js/page-transitions.js adds .page-leave before navigating; every page
+   fades in on arrival. Nav is sticky & identical across pages, so it reads
+   as a persistent bar while content crossfades beneath it. */
+@media (prefers-reduced-motion: no-preference){
+  /* opacity ONLY — a transform keyframe with fill on <body> would leave a
+     permanently-active transform animation, which turns body into the
+     containing block for every position:fixed element (mobile drawer,
+     overlay) and breaks them the moment the page is scrolled */
+  @keyframes lgPageIn{
+    from{opacity:0}
+    to{opacity:1}
+  }
+  @keyframes lgPillIn{
+    from{opacity:.2; transform:scale(.82)}
+    to{opacity:1; transform:none}
+  }
+  body{animation:lgPageIn .34s ease both}
+  /* animation:none is required — a filled animation would win over opacity:0 */
+  body.page-leave{animation:none; opacity:0; transition:opacity .16s ease}
+  /* active nav pill pops softly on each page switch */
+  .nlinks a.active,.drawer-links a.active{animation:lgPillIn .4s cubic-bezier(.3,1.4,.4,1) .05s backwards}
+}
+/* navbar surface changes (scroll state, theme) fade smoothly */
+nav{transition:background-color .35s ease,border-color .3s ease,box-shadow .3s ease}
+
+/* ── Sticky-nav scroll stability on mobile ─────────────────────────────── */
+/* Own compositor layer so the bar doesn't lag/jitter behind the scroll;
+   nav has no fixed-position descendants, so the transform is safe. */
+nav{transform:translateZ(0)}
+/* Heavy blur is what makes the bar repaint slowly on phones — soften it. */
+@media (max-width:900px){
+  nav{
+    -webkit-backdrop-filter:blur(12px) saturate(150%);
+    backdrop-filter:blur(12px) saturate(150%);
+  }
+}

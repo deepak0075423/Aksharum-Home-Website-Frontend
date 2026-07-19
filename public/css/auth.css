@@ -1,0 +1,235 @@
+:root{
+  --p100:#f1ecff;--p200:#e5dcff;--p300:#d0c0fa;
+  --p500:#9d83e6;--p600:#7c5fd6;--p700:#5d3fb8;--p800:#3f2885;
+  --ink:#1a1230;--ink2:#4a4063;--ink3:#9590a8;
+  --line:#e8e3f7;--bg:#f5f3fb;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);-webkit-font-smoothing:antialiased}
+button,input{font-family:'DM Sans',sans-serif}
+a{color:var(--p700);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* PAGE */
+.page{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:32px 16px;
+  position:relative;
+  overflow:hidden;
+}
+.page::before{
+  content:'';position:fixed;
+  top:-140px;right:-120px;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(184,164,240,.18),transparent 68%);
+  pointer-events:none;z-index:0;
+}
+.page::after{
+  content:'';position:fixed;
+  bottom:-120px;left:-100px;
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(157,131,230,.13),transparent 68%);
+  pointer-events:none;z-index:0;
+}
+
+/* CARD */
+.card{
+  position:relative;z-index:1;
+  width:100%;max-width:460px;
+  background:#fff;
+  border:1px solid rgba(200,190,230,.35);
+  border-radius:20px;
+  padding:44px 40px 40px;
+  box-shadow:0 4px 40px rgba(93,63,184,.09);
+}
+
+/* HEADING */
+.card h1{
+  font-family:'Playfair Display',serif;
+  font-size:30px;font-weight:800;
+  color:var(--ink);
+  text-align:center;
+  margin-bottom:6px;
+  letter-spacing:-.02em;
+  line-height:1.1;
+}
+.card .sub{
+  font-size:14px;color:var(--ink3);
+  text-align:center;
+  margin-bottom:30px;
+  line-height:1.5;
+}
+
+/* SOCIAL */
+.soc-btn{
+  width:100%;padding:13px 16px;
+  border-radius:11px;
+  font-size:14.5px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  cursor:pointer;transition:all .22s;
+  margin-bottom:10px;
+}
+.soc-btn:last-of-type{margin-bottom:0}
+.btn-google{
+  background:#fff;color:var(--ink);
+  border:1.5px solid var(--line);
+}
+.btn-google:hover{
+  border-color:var(--p300);
+  background:var(--p100);
+  transform:translateY(-1px);
+  box-shadow:0 4px 14px rgba(93,63,184,.1);
+}
+.soc-btn svg{flex-shrink:0}
+
+/* DIVIDER */
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:22px 0;
+}
+.divider::before,.divider::after{
+  content:'';flex:1;height:1px;background:var(--line);
+}
+.divider span{
+  font-size:11.5px;font-weight:700;
+  color:var(--ink3);letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+/* FIELDS */
+.field{margin-bottom:14px}
+.field label{
+  display:block;
+  font-size:13px;font-weight:600;
+  color:var(--ink2);
+  margin-bottom:7px;
+}
+.field input{
+  width:100%;padding:13px 15px;
+  background:#faf9fd;
+  border:1.5px solid var(--line);
+  border-radius:10px;
+  font-size:15px;color:var(--ink);
+  outline:none;
+  transition:border-color .25s,box-shadow .25s,background .25s;
+}
+.field input::placeholder{color:var(--ink3)}
+.field input:focus{
+  border-color:var(--p500);
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(124,95,214,.1);
+}
+
+/* FORGOT */
+.forgot-row{
+  display:flex;justify-content:flex-end;
+  margin:-4px 0 16px;
+}
+.forgot-btn{
+  font-size:13px;font-weight:500;
+  color:var(--p700);background:none;border:none;
+  cursor:pointer;transition:color .2s;
+}
+.forgot-btn:hover{color:var(--p800);text-decoration:underline}
+
+/* PRIMARY BTN */
+.btn-primary{
+  width:100%;padding:14px;
+  background:var(--p700);color:#fff;
+  border-radius:11px;
+  font-size:15px;font-weight:700;
+  border:none;cursor:pointer;
+  transition:all .25s;
+  position:relative;overflow:hidden;
+  letter-spacing:-.01em;
+  margin-top:4px;
+}
+.btn-primary::after{
+  content:'';position:absolute;
+  top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  transition:left .55s;
+}
+.btn-primary:hover{
+  background:var(--p800);
+  transform:translateY(-2px);
+  box-shadow:0 10px 28px rgba(93,63,184,.32);
+}
+.btn-primary:hover::after{left:100%}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.65;cursor:not-allowed;transform:none}
+
+/* SWITCH */
+.switch-row{
+  text-align:center;
+  margin-top:20px;
+  font-size:14px;color:var(--ink3);
+}
+.switch-row button{
+  color:var(--p700);font-weight:600;font-size:14px;
+  background:none;border:none;cursor:pointer;
+  transition:color .2s;margin-left:4px;
+}
+.switch-row button:hover{color:var(--p800);text-decoration:underline}
+
+/* LEGAL */
+.legal{
+  text-align:center;
+  margin-top:18px;
+  font-size:12px;color:var(--ink3);
+  line-height:1.6;
+}
+.legal a{color:var(--p700);font-weight:500}
+
+/* MAGIC LINK STATE */
+.magic-state{display:none;text-align:center;padding:8px 0}
+.magic-state.on{display:block}
+.magic-ring{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--p100);border:2px solid var(--p300);
+  display:grid;place-items:center;
+  margin:0 auto 16px;
+  animation:pop .45s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.magic-ring svg{width:28px;height:28px;color:var(--p700)}
+.magic-state h3{
+  font-family:'Playfair Display',serif;
+  font-size:22px;color:var(--ink);margin-bottom:8px;
+}
+.magic-state p{font-size:14px;color:var(--ink3);line-height:1.65;max-width:280px;margin:0 auto 18px}
+.resend{
+  font-size:13.5px;color:var(--p700);font-weight:600;
+  background:none;border:none;cursor:pointer;
+}
+.resend:hover{text-decoration:underline}
+
+/* PANEL TRANSITIONS */
+.panel{animation:panelIn .35s cubic-bezier(.175,.885,.32,1.275) both}
+@keyframes panelIn{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.panel-out{animation:panelOut .22s ease forwards}
+@keyframes panelOut{
+  to{opacity:0;transform:translateY(-12px)}
+}
+
+/* ERROR shake */
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-7px)}
+  40%{transform:translateX(7px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}
+.shake{animation:shake .35s ease-in-out}
+
+/* ── GLOBAL X-OVERFLOW GUARD ──
+   Prevents stray horizontal pan (decor orbs extend past the right edge).
+   'clip' creates no scroll container, so layout is unaffected. */
+html,body{overflow-x:clip}
