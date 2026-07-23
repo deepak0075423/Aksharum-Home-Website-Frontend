@@ -306,8 +306,8 @@ ${layout.expandedFooterHtml}
                   </div>
                   <p className="mt-2 text-xs text-zinc-500">
                     {kind === "logo"
-                      ? "Replaces the graduation-cap icon in the header. Square images look best."
-                      : "The browser-tab icon. PNG or ICO, ideally 32×32 or larger."}
+                      ? "Replaces the graduation-cap icon in the header. Use a square image with a transparent background — it fills the badge on its own colors, so busy or non-transparent images can look cramped. Max 5MB."
+                      : "The browser-tab icon. PNG or ICO, ideally 32×32 or larger. Max 5MB."}
                   </p>
                 </div>
               );
