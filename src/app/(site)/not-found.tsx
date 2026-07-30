@@ -1,4 +1,11 @@
+import type { Metadata } from "next";
 import { CmsPageRenderer, getCmsPage } from "@/components/cms-page";
+
+// A 404 must never be indexed.
+export const metadata: Metadata = {
+  title: "Page Not Found",
+  robots: { index: false, follow: false },
+};
 
 // Renders the admin-editable "404" CMS page for any unknown URL
 // (edit it under Admin → Pages). Falls back to a minimal message if the
