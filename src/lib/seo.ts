@@ -1,12 +1,12 @@
 import { cache } from "react";
 
 // ── Site identity ─────────────────────────────────────────────────────────
-// Canonical production origin. The site also answers on aksharum.in,
-// aksharum.com and www.aksharum.in — those 301-redirect here (see
+// Canonical production origin. The site also answers on www.aksharum.com,
+// aksharum.in and www.aksharum.in — those 301-redirect here (see
 // next.config.ts) so all SEO signals consolidate on this one URL.
 // Override per environment with NEXT_PUBLIC_SITE_URL (e.g. a staging domain).
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.aksharum.com"
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://aksharum.com"
 ).replace(/\/+$/, "");
 
 export const SITE_NAME = "Aksharum";
