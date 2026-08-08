@@ -16,6 +16,41 @@
   --color-brand-900: #322464;
 }
 
+/* Rich-text editor surface (admin blog editor). Tailwind's preflight strips
+   heading/list styling, so the editable area restates it — otherwise authors
+   can't tell an H2 from a paragraph while typing. */
+.prose-editor {
+  @apply text-[15px] leading-relaxed text-zinc-800;
+}
+.prose-editor > * + * { @apply mt-3; }
+.prose-editor h2 { @apply mt-6 text-2xl font-bold tracking-tight text-zinc-900; }
+.prose-editor h3 { @apply mt-5 text-xl font-bold tracking-tight text-zinc-900; }
+.prose-editor p { @apply min-h-[1em]; }
+.prose-editor strong { @apply font-semibold; }
+.prose-editor em { @apply italic; }
+.prose-editor s { @apply line-through; }
+.prose-editor a { @apply text-brand-700 underline underline-offset-2; }
+.prose-editor ul { @apply list-disc pl-6; }
+.prose-editor ol { @apply list-decimal pl-6; }
+.prose-editor li + li { @apply mt-1; }
+.prose-editor blockquote {
+  @apply border-l-[3px] border-brand-300 pl-4 italic text-zinc-600;
+}
+.prose-editor code {
+  @apply rounded bg-brand-50 px-1.5 py-0.5 font-mono text-[.9em] text-brand-700;
+}
+.prose-editor pre {
+  @apply overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm text-zinc-100;
+}
+.prose-editor pre code { @apply bg-transparent p-0 text-inherit; }
+.prose-editor img { @apply my-4 max-w-full rounded-lg; }
+.prose-editor hr { @apply border-t border-zinc-300; }
+/* Placeholder for an empty document */
+.prose-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply pointer-events-none float-left h-0 text-zinc-400;
+}
+
 body {
   @apply bg-zinc-100 text-zinc-900 antialiased;
   font-family:

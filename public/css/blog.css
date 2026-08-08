@@ -1,0 +1,266 @@
+/* ══════════════════════════════════════
+   BLOG — listing + article
+
+   Layers on top of one.css, which owns the palette tokens, resets and the
+   shared nav/drawer/footer chrome. Only blog-specific rules live here, plus
+   the few custom properties one.css doesn't define.
+══════════════════════════════════════ */
+
+:root {
+  --card: #fff;
+  --sh: 0 2px 12px rgba(93, 63, 184, .06);
+  --sh-md: 0 8px 32px rgba(93, 63, 184, .10);
+  --sh-lg: 0 24px 64px rgba(93, 63, 184, .16);
+}
+
+html[data-theme="dark"] {
+  --card: #171126;
+  --sh: 0 2px 12px rgba(0, 0, 0, .22);
+  --sh-md: 0 8px 32px rgba(0, 0, 0, .28);
+  --sh-lg: 0 24px 64px rgba(0, 0, 0, .35);
+}
+
+/* one.css makes body a flex column with footer{margin-top:auto}; this keeps
+   the blog content column stretching so the footer stays at the bottom. */
+.bl-main { flex: 1 }
+
+/* ── HERO ── */
+.bl-hero {
+  background: linear-gradient(160deg, #f8f6ff 0%, #f1ecff 40%, #ede8ff 100%);
+  padding: 72px 0 56px;
+  position: relative;
+  overflow: hidden;
+}
+html[data-theme="dark"] .bl-hero {
+  background: linear-gradient(160deg, #171126 0%, #1d1430 45%, #211735 100%);
+}
+.bl-hero::before {
+  content: ''; position: absolute;
+  top: -80px; right: -80px; width: 520px; height: 520px;
+  background: radial-gradient(circle, rgba(184, 164, 240, .16), transparent 65%);
+  pointer-events: none;
+}
+.bl-hero-inner {
+  max-width: 1200px; margin: 0 auto; padding: 0 52px;
+  position: relative; z-index: 2;
+}
+.bl-ey {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .13em; color: var(--p600); margin-bottom: 18px;
+}
+.bl-ey::before { content: ''; width: 18px; height: 2px; background: var(--p400); border-radius: 2px }
+.bl-hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 4.6vw, 58px); font-weight: 800;
+  line-height: .98; letter-spacing: -.04em; margin-bottom: 18px;
+  color: var(--ink);
+}
+.bl-hero h1 em { font-style: italic; color: var(--p700); display: block }
+.bl-hero p { font-size: 17px; color: var(--ink3); line-height: 1.75; max-width: 520px }
+
+/* ── TAG FILTER ── */
+/* Sits between the hero and the grid, on the same gutters as both. */
+.bl-tagbar {
+  max-width: 1200px; margin: 0 auto; padding: 34px 52px 0;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.bl-tag {
+  font-family: inherit;
+  padding: 7px 16px; font-size: 13px; font-weight: 500;
+  border-radius: var(--rpill); border: 1.5px solid var(--line);
+  background: var(--card); color: var(--ink2);
+  cursor: pointer; transition: all .2s;
+}
+.bl-tag:hover { border-color: var(--p300); color: var(--p700); transform: translateY(-1px) }
+.bl-tag.active { background: var(--p700); border-color: var(--p700); color: #fff; font-weight: 600 }
+html[data-theme="dark"] .bl-tag.active { color: var(--p900) }
+
+/* ── GRID ── */
+.bl-wrap { max-width: 1200px; margin: 0 auto; padding: 64px 52px 96px }
+.bl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+  gap: 30px;
+}
+
+/* ── CARD ── */
+/* The media block is always present, so cards with and without a cover
+   image keep identical height and the grid rows stay even. */
+.bl-card {
+  display: flex; flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--sh);
+  transition: transform .28s, box-shadow .28s, border-color .28s;
+}
+.bl-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sh-md);
+  border-color: var(--p300);
+}
+.bl-media {
+  position: relative; display: block;
+  aspect-ratio: 16 / 9; overflow: hidden; background: var(--p100);
+}
+.bl-media img {
+  width: 100%; height: 100%; display: block;
+  object-fit: cover; transition: transform .5s;
+}
+.bl-card:hover .bl-media img { transform: scale(1.04) }
+
+/* Cover-less fallback: brand gradient tile with the logo mark. */
+.bl-media.is-empty {
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--p700) 0%, var(--p600) 45%, var(--p400) 100%);
+}
+html[data-theme="dark"] .bl-media.is-empty {
+  background: linear-gradient(135deg, #2f1f57 0%, #46308a 50%, #5d3fb8 100%);
+}
+.bl-media.is-empty::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 78% 18%, rgba(255, 255, 255, .22), transparent 55%);
+}
+/* Sized explicitly — the shared nav SVG rules don't reach inside the card. */
+.bl-mark {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: rgba(255, 255, 255, .16);
+  border: 1.5px solid rgba(255, 255, 255, .28);
+  display: grid; place-items: center;
+  backdrop-filter: blur(6px);
+  position: relative; z-index: 2;
+}
+.bl-mark svg { width: 26px; height: 26px; color: #fff }
+
+.bl-body { display: flex; flex-direction: column; flex: 1; padding: 22px 22px 20px; gap: 10px }
+.bl-chips { display: flex; flex-wrap: wrap; gap: 6px }
+.bl-chip {
+  font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--p700); background: var(--p100);
+  padding: 4px 10px; border-radius: var(--rpill);
+}
+.bl-card h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px; font-weight: 700; line-height: 1.25;
+  letter-spacing: -.02em; color: var(--ink);
+}
+.bl-card h2 a { color: inherit; text-decoration: none; transition: color .2s }
+.bl-card h2 a:hover { color: var(--p700) }
+.bl-excerpt {
+  font-size: 14.5px; line-height: 1.65; color: var(--ink3);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Pushes the byline to the bottom so it lines up across cards. */
+.bl-meta {
+  margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--ink3);
+}
+.bl-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--p700); color: #fff;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+html[data-theme="dark"] .bl-avatar { color: var(--p900) }
+.bl-author { font-weight: 600; color: var(--ink2) }
+.bl-dot { opacity: .5 }
+
+/* ── EMPTY STATE ── */
+.bl-empty {
+  text-align: center; padding: 90px 20px;
+  border: 1.5px dashed var(--line); border-radius: 20px;
+  color: var(--ink3);
+}
+.bl-empty h2 { font-size: 24px; margin-bottom: 10px; color: var(--ink) }
+
+/* ══════════════════════════════════════
+   ARTICLE
+══════════════════════════════════════ */
+.bl-article { max-width: 760px; margin: 0 auto; padding: 56px 24px 96px }
+.bl-back {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 14px; font-weight: 500; color: var(--ink3); margin-bottom: 26px;
+  text-decoration: none; transition: color .2s;
+}
+.bl-back:hover { color: var(--p700) }
+.bl-article h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(32px, 4.4vw, 50px); font-weight: 800;
+  line-height: 1.06; letter-spacing: -.03em; margin: 14px 0 18px;
+  color: var(--ink);
+}
+.bl-article-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 9px;
+  font-size: 14px; color: var(--ink3);
+  padding-bottom: 26px; border-bottom: 1px solid var(--line); margin-bottom: 30px;
+}
+/* Fixed 16:9 like the cards — a portrait upload would otherwise push the
+   article body off the first screen. */
+.bl-cover {
+  border-radius: 18px; overflow: hidden; margin-bottom: 34px;
+  box-shadow: var(--sh-md);
+  aspect-ratio: 16 / 9; background: var(--p100);
+}
+.bl-cover img { width: 100%; height: 100%; display: block; object-fit: cover }
+.bl-lead { font-size: 18.5px; line-height: 1.7; color: var(--ink2); margin-bottom: 28px; font-weight: 500 }
+
+/* Rich-text output from the admin editor. */
+.bl-content { font-size: 17px; line-height: 1.8; color: var(--ink2) }
+.bl-content > * + * { margin-top: 22px }
+.bl-content h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px; font-weight: 700; margin-top: 44px;
+  letter-spacing: -.02em; color: var(--ink);
+}
+.bl-content h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 23px; font-weight: 700; margin-top: 34px;
+  letter-spacing: -.02em; color: var(--ink);
+}
+.bl-content a { color: var(--p700); text-decoration: underline; text-underline-offset: 3px }
+.bl-content a:hover { color: var(--p600) }
+.bl-content ul, .bl-content ol { padding-left: 26px }
+.bl-content ul { list-style: disc }
+.bl-content ol { list-style: decimal }
+.bl-content li + li { margin-top: 8px }
+.bl-content img { max-width: 100%; height: auto; border-radius: 14px; margin: 30px 0 }
+.bl-content blockquote {
+  border-left: 3px solid var(--p400);
+  padding: 4px 0 4px 22px;
+  color: var(--ink3); font-style: italic; font-size: 18px;
+}
+.bl-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .89em; background: var(--p100); color: var(--p700);
+  padding: 2px 6px; border-radius: 6px;
+}
+.bl-content pre {
+  background: var(--p900); color: #ded2ff;
+  padding: 18px 20px; border-radius: 14px; overflow-x: auto;
+}
+.bl-content pre code { background: none; color: inherit; padding: 0 }
+.bl-content hr { border: none; border-top: 1px solid var(--line) }
+
+/* ── READ NEXT ── */
+.bl-next { max-width: 1200px; margin: 0 auto; padding: 0 52px 96px }
+.bl-next h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 27px; font-weight: 700; margin-bottom: 26px;
+  padding-top: 42px; border-top: 1px solid var(--line); color: var(--ink);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .bl-hero { padding: 52px 0 44px }
+  .bl-hero-inner, .bl-wrap, .bl-next, .bl-tagbar { padding-left: 24px; padding-right: 24px }
+  .bl-wrap { padding-top: 40px; padding-bottom: 64px }
+  .bl-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px }
+}
+@media (max-width: 560px) {
+  .bl-grid { grid-template-columns: 1fr }
+  .bl-article { padding: 36px 20px 64px }
+}

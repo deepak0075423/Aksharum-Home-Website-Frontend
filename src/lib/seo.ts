@@ -182,6 +182,106 @@ function breadcrumbNode(name: string, canonical: string): Json {
   };
 }
 
+// ── Blog structured data ────────────────────────────────────────────────────
+
+const BLOG_ID = `${SITE_URL}/blogs#blog`;
+
+interface BlogSeoPost {
+  slug: string;
+  title: string;
+  excerpt: string;
+  author: string;
+  tags: string[];
+  publishedAt: string | null;
+  updatedAt: string;
+}
+
+function blogBreadcrumb(post?: BlogSeoPost): Json {
+  const trail: Json[] = [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+    { "@type": "ListItem", position: 2, name: "Blog", item: `${SITE_URL}/blogs` },
+  ];
+  if (post) {
+    trail.push({
+      "@type": "ListItem",
+      position: 3,
+      name: post.title,
+      item: `${SITE_URL}/blogs/${post.slug}`,
+    });
+  }
+  return { "@type": "BreadcrumbList", itemListElement: trail };
+}
+
+/** @graph for /blogs — a Blog node listing its posts, plus a breadcrumb. */
+export function buildBlogListJsonLd(args: {
+  posts: BlogSeoPost[];
+  site: SiteInfo | null;
+}): Json {
+  const { posts, site } = args;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(site),
+      {
+        "@type": "Blog",
+        "@id": BLOG_ID,
+        url: `${SITE_URL}/blogs`,
+        name: `${site?.siteName || SITE_NAME} Blog`,
+        description: DEFAULT_DESCRIPTION,
+        publisher: { "@id": ORG_ID },
+        inLanguage: "en",
+        blogPost: posts.map((p) => ({
+          "@type": "BlogPosting",
+          "@id": `${SITE_URL}/blogs/${p.slug}#post`,
+          headline: p.title,
+          url: `${SITE_URL}/blogs/${p.slug}`,
+          ...(p.excerpt ? { description: p.excerpt } : {}),
+          datePublished: p.publishedAt ?? undefined,
+          dateModified: p.updatedAt,
+          author: { "@type": "Person", name: p.author },
+        })),
+      },
+      blogBreadcrumb(),
+    ],
+  };
+}
+
+/** @graph for a single post — BlogPosting with author, dates and cover. */
+export function buildBlogPostJsonLd(args: {
+  post: BlogSeoPost;
+  image: string;
+  wordCount: number;
+  site: SiteInfo | null;
+}): Json {
+  const { post, image, wordCount, site } = args;
+  const url = `${SITE_URL}/blogs/${post.slug}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(site),
+      {
+        "@type": "BlogPosting",
+        "@id": `${url}#post`,
+        headline: post.title,
+        url,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
+        ...(post.excerpt ? { description: post.excerpt } : {}),
+        image: [image],
+        datePublished: post.publishedAt ?? undefined,
+        dateModified: post.updatedAt,
+        author: { "@type": "Person", name: post.author },
+        publisher: { "@id": ORG_ID },
+        isPartOf: { "@id": BLOG_ID },
+        ...(post.tags.length ? { keywords: post.tags.join(", ") } : {}),
+        wordCount,
+        inLanguage: "en",
+      },
+      blogBreadcrumb(post),
+    ],
+  };
+}
+
 /**
  * schema.org @graph for a page. Home carries the site/product identity;
  * inner pages add a breadcrumb trail. Login/error pages get nothing.

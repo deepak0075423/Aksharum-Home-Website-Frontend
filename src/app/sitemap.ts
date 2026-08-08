@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getBlogs } from "@/lib/blogs";
 import { canonicalPath, SITE_URL } from "@/lib/seo";
 
 const API = process.env.API_URL ?? "http://localhost:4000/api";
@@ -32,9 +33,9 @@ async function fetchPublicPages(): Promise<PublicPage[]> {
   }
 }
 
-// Served at /sitemap.xml — built from the DB's indexable pages.
+// Served at /sitemap.xml — built from the DB's indexable pages and posts.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = await fetchPublicPages();
+  const [pages, posts] = await Promise.all([fetchPublicPages(), getBlogs()]);
 
   const entries: MetadataRoute.Sitemap = pages.map((p) => ({
     url: `${SITE_URL}${canonicalPath(p.slug)}`,
@@ -42,6 +43,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: p.slug === "home" ? "daily" : "weekly",
     priority: PRIORITY[p.slug] ?? 0.5,
   }));
+
+  // The blog index, then each published post — newest first, so the most
+  // recent content sits highest in the file.
+  if (posts.length > 0) {
+    entries.push({
+      url: `${SITE_URL}/blogs`,
+      lastModified: new Date(posts[0].updatedAt),
+      changeFrequency: "weekly",
+      priority: 0.7,
+    });
+    for (const post of posts) {
+      entries.push({
+        url: `${SITE_URL}/blogs/${post.slug}`,
+        lastModified: new Date(post.updatedAt),
+        changeFrequency: "monthly",
+        priority: 0.6,
+      });
+    }
+  }
 
   // Never emit an empty sitemap if the API is unreachable at build time.
   if (entries.length === 0) {
