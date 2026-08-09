@@ -2,6 +2,7 @@
 
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import RichEditor from "@/components/rich-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,8 +19,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+
+// The rich editor emits "<p></p>" when empty, so a plain length check isn't
+// enough — strip tags (keeping media) to decide whether a description exists.
+function htmlHasContent(html: string): boolean {
+  if (!html) return false;
+  if (/<(img|iframe|hr|table)\b/i.test(html)) return true;
+  const text = html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
+  return text.length > 0;
+}
 
 interface Job {
   id: string;
@@ -236,6 +248,7 @@ export default function JobsPage() {
       </Card>
 
       <Dialog
+        wide
         open={showForm}
         onClose={() => setShowForm(false)}
         title={editing ? "Edit job" : "Post a new job"}
@@ -246,7 +259,16 @@ export default function JobsPage() {
             </Button>
             <Button
               onClick={saveJob}
-              disabled={busy || !form.title.trim() || !form.department.trim()}
+              disabled={
+                busy ||
+                !form.title.trim() ||
+                !form.department.trim() ||
+                !form.location.trim() ||
+                !form.type.trim() ||
+                form.openings < 1 ||
+                !form.status ||
+                !htmlHasContent(form.description)
+              }
             >
               {editing ? "Save changes" : "Post job"}
             </Button>
@@ -255,7 +277,9 @@ export default function JobsPage() {
       >
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Job title</Label>
+            <Label>
+              Job title <span className="text-red-500">*</span>
+            </Label>
             <Input
               placeholder="e.g. Backend Engineer (NestJS)"
               value={form.title}
@@ -264,7 +288,9 @@ export default function JobsPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Department</Label>
+              <Label>
+                Department <span className="text-red-500">*</span>
+              </Label>
               <Input
                 placeholder="Engineering"
                 value={form.department}
@@ -272,8 +298,11 @@ export default function JobsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Location</Label>
+              <Label>
+                Location <span className="text-red-500">*</span>
+              </Label>
               <Input
+                placeholder="Remote · India"
                 value={form.location}
                 onChange={(e) => setForm({ ...form, location: e.target.value })}
               />
@@ -281,7 +310,9 @@ export default function JobsPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
-              <Label>Type</Label>
+              <Label>
+                Type <span className="text-red-500">*</span>
+              </Label>
               <Select
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
@@ -293,10 +324,12 @@ export default function JobsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Openings</Label>
+              <Label>
+                Openings <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="number"
-                min={0}
+                min={1}
                 value={form.openings}
                 onChange={(e) =>
                   setForm({ ...form, openings: Math.max(0, Number(e.target.value) || 0) })
@@ -304,7 +337,9 @@ export default function JobsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Status</Label>
+              <Label>
+                Status <span className="text-red-500">*</span>
+              </Label>
               <Select
                 value={form.status}
                 onChange={(e) =>
@@ -317,7 +352,9 @@ export default function JobsPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Sort order</Label>
+              <Label>
+                Sort order <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="number"
                 value={form.sortOrder}
@@ -328,12 +365,16 @@ export default function JobsPage() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label>Description (optional, shown to applicants later)</Label>
-            <Textarea
-              rows={4}
-              placeholder="What the role involves, requirements, etc."
+            <Label>
+              Description <span className="text-red-500">*</span>
+            </Label>
+            <p className="text-xs text-zinc-500">
+              Full role details shown to applicants when they open this job on the
+              careers page. Required.
+            </p>
+            <RichEditor
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(html) => setForm({ ...form, description: html })}
             />
           </div>
         </div>

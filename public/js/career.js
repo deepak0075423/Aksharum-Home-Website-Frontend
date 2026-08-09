@@ -177,6 +177,14 @@ function crOpeningsLabel(n){
   return n + (n === 1 ? ' opening' : ' openings');
 }
 
+// Descriptions are admin-authored rich text (HTML). An empty editor still
+// emits "<p></p>", so strip tags (keeping media) to test for real content.
+function crHtmlHasContent(html){
+  if(!html) return false;
+  if(/<(img|iframe|hr|table)\b/i.test(html)) return true;
+  return html.replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim().length > 0;
+}
+
 function crRoleRow(job, idx){
   const ico = CR_DEPT_ICONS[(job.department||'').toLowerCase()] || CR_DEPT_ICONS.default;
   const filled = job.status === 'FILLED';
@@ -251,9 +259,10 @@ function crOpenJobModal(job){
       ? '<span class="cr-role-tag cr-tag-type">Positions Filled</span>'
       : (openLbl ? '<span class="cr-role-tag cr-tag-open">' + openLbl + '</span>' : ''));
 
+  // Admin-authored rich text — rendered as HTML (same trust model as blog bodies).
   const desc = (job.description || '').trim();
-  el.querySelector('.cr-modal-body').innerHTML = desc
-    ? '<p class="cr-modal-desc">' + crEsc(desc) + '</p>'
+  el.querySelector('.cr-modal-body').innerHTML = crHtmlHasContent(desc)
+    ? '<div class="cr-modal-desc">' + desc + '</div>'
     : '<p class="cr-modal-desc cr-modal-empty">No additional details were provided for this role. Apply below and tell us why you’d be a great fit.</p>';
 
   const applyBtn = el.querySelector('.cr-modal-apply');
