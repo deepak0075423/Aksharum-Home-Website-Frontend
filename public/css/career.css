@@ -2637,3 +2637,74 @@ footer .fw {
    Prevents stray horizontal pan on mobile. 'clip' (unlike 'hidden')
    creates no scroll container, so position:sticky nav keeps working. */
 html,body{overflow-x:clip}
+
+/* ══════════════════════════════════════
+   OPENINGS TAG + JOB DETAIL MODAL
+   (added with the "Openings" job field)
+══════════════════════════════════════ */
+
+/* Openings count pill on each role row */
+.cr-tag-open{background:var(--p700);color:#fff}
+html[data-theme="dark"] .cr-tag-open{background:linear-gradient(135deg,#7c5fd6,#a88cff);color:#fff}
+
+/* Lock page scroll while the modal is open (all breakpoints) */
+body.cr-modal-open{overflow:hidden}
+
+/* Overlay */
+.cr-modal-ov{
+  position:fixed;inset:0;z-index:1000;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  background:rgba(26,18,48,.55);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:0;visibility:hidden;
+  transition:opacity .25s ease,visibility .25s ease;
+}
+.cr-modal-ov.on{opacity:1;visibility:visible}
+html[data-theme="dark"] .cr-modal-ov{background:rgba(0,0,0,.62)}
+
+/* Dialog */
+.cr-modal{
+  position:relative;
+  width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
+  background:#fff;border:1px solid var(--line);border-radius:22px;
+  padding:38px 38px 32px;
+  box-shadow:0 30px 80px rgba(93,63,184,.28);
+  transform:translateY(16px) scale(.98);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.cr-modal-ov.on .cr-modal{transform:translateY(0) scale(1)}
+html[data-theme="dark"] .cr-modal{
+  background:#1a1030;border-color:var(--line);
+  box-shadow:0 30px 80px rgba(0,0,0,.5);
+}
+
+/* Close button */
+.cr-modal-x{
+  position:absolute;top:18px;right:18px;
+  width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--p50);color:var(--ink2);border:1px solid var(--line);
+  transition:all .2s;
+}
+.cr-modal-x:hover{background:var(--p100);color:var(--p700)}
+.cr-modal-x svg{width:18px;height:18px}
+html[data-theme="dark"] .cr-modal-x{background:rgba(255,255,255,.045)}
+html[data-theme="dark"] .cr-modal-x:hover{background:rgba(255,255,255,.08);color:var(--p700)}
+
+/* Content */
+.cr-modal-ey{font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--p600);margin-bottom:10px}
+.cr-modal-title{font-size:26px;color:var(--ink);margin-bottom:16px;padding-right:34px;line-height:1.15}
+.cr-modal-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.cr-modal-body{margin-bottom:28px}
+.cr-modal-desc{font-size:15px;line-height:1.7;color:var(--ink2);white-space:pre-wrap}
+.cr-modal-empty{color:var(--ink3);font-style:italic}
+.cr-modal-foot{display:flex;justify-content:flex-end}
+.cr-modal-apply{cursor:pointer}
+
+@media (max-width:560px){
+  .cr-modal{padding:30px 22px 26px;border-radius:18px;max-height:92vh}
+  .cr-modal-title{font-size:22px}
+  .cr-modal-foot{justify-content:stretch}
+  .cr-modal-apply{width:100%;justify-content:center}
+}

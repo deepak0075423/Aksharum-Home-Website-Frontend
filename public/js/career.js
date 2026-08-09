@@ -168,10 +168,20 @@ const CR_DEPT_ICONS = {
   default:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'
 };
 
-function crRoleRow(job){
+// Jobs loaded from the API, kept in scope so a row click can open its detail.
+let crJobs = [];
+
+function crOpeningsLabel(n){
+  n = Number(n);
+  if(!Number.isFinite(n) || n <= 0) return '';
+  return n + (n === 1 ? ' opening' : ' openings');
+}
+
+function crRoleRow(job, idx){
   const ico = CR_DEPT_ICONS[(job.department||'').toLowerCase()] || CR_DEPT_ICONS.default;
   const filled = job.status === 'FILLED';
-  return '<div class="cr-role-row" data-scroll="1">' +
+  const openLbl = crOpeningsLabel(job.openings);
+  return '<div class="cr-role-row" data-idx="' + idx + '">' +
     '<div class="cr-role-left">' +
       '<div class="cr-role-ico">' + ico + '</div>' +
       '<div>' +
@@ -180,12 +190,89 @@ function crRoleRow(job){
           '<span class="cr-role-tag cr-tag-type">' + crEsc(job.type || 'Full-time') + '</span>' +
           '<span class="cr-role-tag cr-tag-loc">' + crEsc(job.location) + '</span>' +
           '<span class="cr-role-tag cr-tag-dep">' + crEsc(job.department) + '</span>' +
-          (filled ? '<span class="cr-role-tag cr-tag-type">Positions Filled</span>' : '') +
+          (filled
+            ? '<span class="cr-role-tag cr-tag-type">Positions Filled</span>'
+            : (openLbl ? '<span class="cr-role-tag cr-tag-open">' + openLbl + '</span>' : '')) +
         '</div>' +
       '</div>' +
     '</div>' +
     '<div class="cr-role-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>' +
   '</div>';
+}
+
+/* ── JOB DETAIL MODAL — opened when a role row is clicked ── */
+
+let crModalEl = null;
+
+function crCloseModal(){
+  if(!crModalEl) return;
+  crModalEl.classList.remove('on');
+  crModalEl.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('cr-modal-open');
+}
+
+function crEnsureModal(){
+  if(crModalEl) return crModalEl;
+  crModalEl = document.createElement('div');
+  crModalEl.className = 'cr-modal-ov';
+  crModalEl.setAttribute('aria-hidden', 'true');
+  crModalEl.innerHTML =
+    '<div class="cr-modal" role="dialog" aria-modal="true" aria-labelledby="crModalTitle">' +
+      '<button class="cr-modal-x" type="button" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+      '<div class="cr-modal-ey">Open Role</div>' +
+      '<h3 class="cr-modal-title" id="crModalTitle"></h3>' +
+      '<div class="cr-modal-meta"></div>' +
+      '<div class="cr-modal-body"></div>' +
+      '<div class="cr-modal-foot">' +
+        '<button class="cr-btn-pri cr-modal-apply" type="button">Apply for this role <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(crModalEl);
+  crModalEl.querySelector('.cr-modal-x').addEventListener('click', crCloseModal);
+  crModalEl.addEventListener('click', e=>{ if(e.target === crModalEl) crCloseModal(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape' && crModalEl.classList.contains('on')) crCloseModal();
+  });
+  return crModalEl;
+}
+
+function crOpenJobModal(job){
+  const el = crEnsureModal();
+  const filled = job.status === 'FILLED';
+  const openLbl = crOpeningsLabel(job.openings);
+
+  el.querySelector('.cr-modal-ey').textContent = filled ? 'Role Filled' : 'Open Role';
+  el.querySelector('.cr-modal-title').textContent = job.title || 'Role';
+  el.querySelector('.cr-modal-meta').innerHTML =
+    '<span class="cr-role-tag cr-tag-type">' + crEsc(job.type || 'Full-time') + '</span>' +
+    '<span class="cr-role-tag cr-tag-loc">' + crEsc(job.location) + '</span>' +
+    '<span class="cr-role-tag cr-tag-dep">' + crEsc(job.department) + '</span>' +
+    (filled
+      ? '<span class="cr-role-tag cr-tag-type">Positions Filled</span>'
+      : (openLbl ? '<span class="cr-role-tag cr-tag-open">' + openLbl + '</span>' : ''));
+
+  const desc = (job.description || '').trim();
+  el.querySelector('.cr-modal-body').innerHTML = desc
+    ? '<p class="cr-modal-desc">' + crEsc(desc) + '</p>'
+    : '<p class="cr-modal-desc cr-modal-empty">No additional details were provided for this role. Apply below and tell us why you’d be a great fit.</p>';
+
+  const applyBtn = el.querySelector('.cr-modal-apply');
+  applyBtn.style.display = filled ? 'none' : '';
+  applyBtn.onclick = ()=>{
+    crCloseModal();
+    const roleSel = document.querySelector('#crForm select.cr-fi');
+    if(roleSel){
+      const opt = Array.from(roleSel.options).find(o=>o.dataset.jobId === job.id);
+      if(opt) roleSel.value = opt.value;
+    }
+    document.getElementById('crFormSec').scrollIntoView({ behavior:'smooth' });
+  };
+
+  const dialog = el.querySelector('.cr-modal');
+  if(dialog) dialog.scrollTop = 0;
+  el.classList.add('on');
+  el.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('cr-modal-open');
 }
 
 function crApplyRoleRowEffects(){
@@ -194,7 +281,14 @@ function crApplyRoleRowEffects(){
   attachTilt(document.querySelectorAll('.cr-role-row'));
   document.querySelectorAll('.cr-role-row').forEach(row=>{
     row.addEventListener('click',()=>{
-      document.getElementById('crFormSec').scrollIntoView({ behavior:'smooth' });
+      const idx = row.getAttribute('data-idx');
+      const job = idx !== null ? crJobs[Number(idx)] : null;
+      if(job){
+        crOpenJobModal(job);
+      } else {
+        // static fallback rows carry no job data — just jump to the form
+        document.getElementById('crFormSec').scrollIntoView({ behavior:'smooth' });
+      }
     });
   });
 }
@@ -205,6 +299,7 @@ function crApplyRoleRowEffects(){
     const res = await fetch('/api/jobs');
     if(res.ok){
       const jobs = await res.json();
+      crJobs = jobs;
       if(grid){
         grid.innerHTML = jobs.length
           ? jobs.map(crRoleRow).join('')

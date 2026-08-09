@@ -28,6 +28,7 @@ interface Job {
   location: string;
   type: string;
   description: string;
+  openings: number;
   status: "OPEN" | "FILLED" | "CLOSED";
   sortOrder: number;
   _count?: { applications: number };
@@ -43,6 +44,7 @@ const EMPTY: Omit<Job, "id" | "_count"> = {
   location: "Remote · India",
   type: "Full-time",
   description: "",
+  openings: 1,
   status: "OPEN",
   sortOrder: 0,
 };
@@ -98,6 +100,7 @@ export default function JobsPage() {
       location: job.location,
       type: job.type,
       description: job.description,
+      openings: job.openings,
       status: job.status,
       sortOrder: job.sortOrder,
     });
@@ -180,6 +183,7 @@ export default function JobsPage() {
               <TableHead>Department</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Openings</TableHead>
               <TableHead>Applications</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -192,6 +196,7 @@ export default function JobsPage() {
                 <TableCell>{job.department}</TableCell>
                 <TableCell>{job.location}</TableCell>
                 <TableCell>{job.type}</TableCell>
+                <TableCell>{job.openings}</TableCell>
                 <TableCell>{job._count?.applications ?? 0}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -221,7 +226,7 @@ export default function JobsPage() {
             ))}
             {jobs.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-zinc-400">
+                <TableCell colSpan={8} className="py-8 text-center text-zinc-400">
                   No jobs yet — post your first role.
                 </TableCell>
               </TableRow>
@@ -274,7 +279,7 @@ export default function JobsPage() {
               />
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <Label>Type</Label>
               <Select
@@ -286,6 +291,17 @@ export default function JobsPage() {
                 <option>Internship</option>
                 <option>Contract</option>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Openings</Label>
+              <Input
+                type="number"
+                min={0}
+                value={form.openings}
+                onChange={(e) =>
+                  setForm({ ...form, openings: Math.max(0, Number(e.target.value) || 0) })
+                }
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
