@@ -12,6 +12,10 @@ import {
   SITE_NAME,
 } from "@/lib/seo";
 
+// Uses `cache: "no-store"` fetches (fresh on publish) — render on demand so
+// Next never pre-renders this as static and hits the static-to-dynamic 500.
+export const dynamic = "force-dynamic";
+
 const TITLE = `Blog — School ERP Insights & Guides | ${SITE_NAME}`;
 const DESCRIPTION =
   "Practical guides, product updates and ideas on running a modern school — admissions, attendance, fees, exams and parent communication, from the Aksharum team.";

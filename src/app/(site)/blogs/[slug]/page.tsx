@@ -6,7 +6,6 @@ import {
   coverUrl,
   formatDate,
   getBlog,
-  getBlogs,
   readingMinutes,
 } from "@/lib/blogs";
 import {
@@ -21,11 +20,12 @@ import {
 
 type Params = Promise<{ slug: string }>;
 
-// Pre-render the published posts at build time; new ones render on demand.
-export async function generateStaticParams() {
-  const posts = await getBlogs();
-  return posts.map((p) => ({ slug: p.slug }));
-}
+// Posts are fetched with `cache: "no-store"` so they reflect admin edits
+// immediately. Render on demand — do NOT pre-render as static, or the
+// no-store fetch collides with the prerender at runtime ("Page changed from
+// static to dynamic"), which 500s the route. force-dynamic makes that
+// explicit and deterministic across builds.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
