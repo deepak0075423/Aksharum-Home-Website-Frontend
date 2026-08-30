@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Mail, Send } from "lucide-react";
+import { FileCode2, Loader2, Mail, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,9 +33,35 @@ interface Site {
   careersClosedMessage: string;
 }
 
+interface Seo {
+  sitemap: boolean;
+  robots: boolean;
+  llms: boolean;
+}
+
+// The three crawler-facing files, and what each one is for.
+const SEO_FILES: { key: keyof Seo; path: string; blurb: string }[] = [
+  {
+    key: "sitemap",
+    path: "/sitemap.xml",
+    blurb: "Lists every public page and blog post for search engines.",
+  },
+  {
+    key: "robots",
+    path: "/robots.txt",
+    blurb: "Tells crawlers what they may visit, and points to the sitemap.",
+  },
+  {
+    key: "llms",
+    path: "/llms.txt",
+    blurb: "A plain-text summary of the site for AI assistants and crawlers.",
+  },
+];
+
 export default function SettingsPage() {
   const [smtp, setSmtp] = useState<Smtp | null>(null);
   const [site, setSite] = useState<Site | null>(null);
+  const [seo, setSeo] = useState<Seo | null>(null);
   const [smtpPass, setSmtpPass] = useState("");
   const [testTo, setTestTo] = useState("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -46,10 +72,11 @@ export default function SettingsPage() {
   const [confirmPw, setConfirmPw] = useState("");
 
   useEffect(() => {
-    api<{ smtp: Smtp; site: Site }>("/settings")
+    api<{ smtp: Smtp; site: Site; seo: Seo }>("/settings")
       .then((s) => {
         setSmtp({ ...s.smtp, pass: "" });
         setSite(s.site);
+        setSeo(s.seo);
       })
       .catch((e) => setMsg({ kind: "err", text: e.message }));
   }, []);
@@ -104,6 +131,28 @@ export default function SettingsPage() {
     }
   }
 
+  // Each switch saves on the spot: one toggle is a whole decision, and a
+  // Save button next to three switches invites forgetting to press it.
+  async function toggleSeo(key: keyof Seo, value: boolean) {
+    if (!seo) return;
+    const previous = seo;
+    setSeo({ ...seo, [key]: value });
+    setBusy(`seo-${key}`);
+    try {
+      await api("/settings/seo", {
+        method: "PUT",
+        body: JSON.stringify({ [key]: value }),
+      });
+      const file = SEO_FILES.find((f) => f.key === key)!;
+      flash("ok", `${file.path} is now ${value ? "enabled" : "disabled"}.`);
+    } catch (e) {
+      setSeo(previous); // put the switch back where it was
+      flash("err", e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function changePassword() {
     if (newPw !== confirmPw) {
       flash("err", "New passwords do not match.");
@@ -126,7 +175,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (!smtp || !site) {
+  if (!smtp || !site || !seo) {
     return (
       <div className="flex h-64 items-center justify-center text-zinc-400">
         <Loader2 className="h-6 w-6 animate-spin" />
@@ -139,7 +188,7 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-xl font-semibold">Settings</h1>
         <p className="text-sm text-zinc-500">
-          SMTP credentials, careers form, and your admin account.
+          SMTP credentials, careers form, SEO files, and your admin account.
         </p>
       </div>
 
@@ -308,6 +357,48 @@ export default function SettingsPage() {
             {busy === "site" && <Loader2 className="h-4 w-4 animate-spin" />}
             Save
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* SEO files */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileCode2 className="h-4 w-4" /> SEO files
+          </CardTitle>
+          <CardDescription className="mt-1">
+            Choose which crawler-facing files this site serves. A disabled file
+            returns 404. These switches are stored per environment, so turning
+            one off here does not affect any other deployment.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1">
+          {SEO_FILES.map((file) => (
+            <div
+              key={file.key}
+              className="flex items-center justify-between gap-4 border-b border-zinc-100 py-3 last:border-0"
+            >
+              <div className="min-w-0">
+                <p className="font-mono text-sm font-medium">{file.path}</p>
+                <p className="mt-0.5 text-sm text-zinc-500">{file.blurb}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {busy === `seo-${file.key}` && (
+                  <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+                )}
+                <Switch
+                  checked={seo[file.key]}
+                  disabled={busy === `seo-${file.key}`}
+                  onCheckedChange={(v) => toggleSeo(file.key, v)}
+                />
+              </div>
+            </div>
+          ))}
+          {!seo.sitemap && seo.robots && (
+            <p className="pt-3 text-sm text-amber-700">
+              With the sitemap off, robots.txt stops linking to it.
+            </p>
+          )}
         </CardContent>
       </Card>
 
