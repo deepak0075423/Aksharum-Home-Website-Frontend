@@ -15,7 +15,13 @@ export async function GET(): Promise<Response> {
   const lines = [
     "User-Agent: *",
     "Allow: /",
-    // Admin panel and the API proxy are never useful in search.
+    // The logo and favicon are served by the API, and Google will not show a
+    // site icon it is not allowed to fetch. These two Allow lines must stay
+    // above the /api/ block: crawlers apply the longest matching rule, so the
+    // more specific Allow wins.
+    "Allow: /api/layout/favicon",
+    "Allow: /api/layout/logo",
+    // Admin panel and the rest of the API are never useful in search.
     "Disallow: /admin",
     "Disallow: /api/",
     "",
