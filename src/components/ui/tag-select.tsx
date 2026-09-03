@@ -6,6 +6,21 @@ import { cn } from "@/lib/utils";
 import { Badge } from "./badge";
 
 /**
+ * "Fees, Admissions, Fees" -> ["Fees", "Admissions"]. Commas always separate
+ * tags, so a pasted or typed list never lands as one long tag.
+ */
+function splitTags(raw: string): string[] {
+  const out: string[] = [];
+  for (const part of raw.split(",")) {
+    const tag = part.trim();
+    if (tag && !out.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+      out.push(tag);
+    }
+  }
+  return out;
+}
+
+/**
  * Searchable tag multi-select.
  *
  * Replaces a free-text "comma-separated" field: existing tags are searched
@@ -44,7 +59,8 @@ export function TagSelect({
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  const needle = query.trim();
+  // Only the token still being typed narrows the list below.
+  const needle = query.split(",").pop()?.trim() ?? "";
 
   const matches = useMemo(() => {
     const lower = needle.toLowerCase();
@@ -57,13 +73,20 @@ export function TagSelect({
     );
   }, [options, needle, value]);
 
-  // Offer to coin a tag only when nothing already matches it exactly.
-  const canCreate =
-    needle.length > 0 &&
-    !options.some((o) => o.tag.toLowerCase() === needle.toLowerCase()) &&
-    !value.some((t) => t.toLowerCase() === needle.toLowerCase());
+  // The tag still being typed, unless it is already picked. Commas commit as
+  // they are typed (see the input below), so only ever one is left pending.
+  const typed = useMemo(() => {
+    const [tag] = splitTags(query);
+    if (!tag) return "";
+    return value.some((v) => v.toLowerCase() === tag.toLowerCase()) ? "" : tag;
+  }, [query, value]);
 
   const full = value.length >= max;
+
+  // A tag that already exists is better ticked in the list below.
+  const showAdd =
+    typed !== "" &&
+    !options.some((o) => o.tag.toLowerCase() === typed.toLowerCase());
 
   function toggle(tag: string) {
     if (value.includes(tag)) {
@@ -73,9 +96,18 @@ export function TagSelect({
     }
   }
 
-  function create() {
-    if (!canCreate || full) return;
-    onChange([...value, needle]);
+  /** Appends whatever fits under the cap, skipping tags already picked. */
+  function addTags(tags: string[]) {
+    const room = max - value.length;
+    const fresh = tags.filter(
+      (t) => !value.some((v) => v.toLowerCase() === t.toLowerCase()),
+    );
+    if (room <= 0 || fresh.length === 0) return;
+    onChange([...value, ...fresh.slice(0, room)]);
+  }
+
+  function commitTyped() {
+    if (typed) addTags([typed]);
     setQuery("");
     inputRef.current?.focus();
   }
@@ -139,17 +171,38 @@ export function TagSelect({
             <input
               ref={inputRef}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // A comma closes a tag: commit everything before the last one
+                // and keep the rest in the box, so typing or pasting
+                // "Fees, Admissions, Exams" lands as three chips.
+                const cut = raw.lastIndexOf(",");
+                if (cut === -1) {
+                  setQuery(raw);
+                  return;
+                }
+                addTags(splitTags(raw.slice(0, cut)));
+                setQuery(raw.slice(cut + 1).trimStart());
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  create();
+                  commitTyped();
                 } else if (e.key === "Escape") {
                   setOpen(false);
+                } else if (
+                  e.key === "Backspace" &&
+                  query === "" &&
+                  value.length > 0
+                ) {
+                  // Backspace on an empty box drops the last chip.
+                  onChange(value.slice(0, -1));
                 }
               }}
               placeholder={
-                loading ? "Loading tags…" : `Search ${options.length} tags…`
+                loading
+                  ? "Loading tags…"
+                  : `Search ${options.length} tags, or type new ones…`
               }
               className="h-8 w-full rounded-md border border-zinc-200 px-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             />
@@ -161,19 +214,19 @@ export function TagSelect({
             role="listbox"
             aria-multiselectable
           >
-            {canCreate && (
+            {showAdd && (
               <button
                 type="button"
-                onClick={create}
+                onClick={commitTyped}
                 disabled={full}
                 className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-brand-700 hover:bg-brand-50 disabled:opacity-50"
               >
-                <Plus className="h-4 w-4" />
-                Create “{needle}”
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="truncate">Create “{typed}”</span>
               </button>
             )}
 
-            {matches.length === 0 && !canCreate ? (
+            {matches.length === 0 && !showAdd ? (
               <p className="px-2.5 py-4 text-center text-sm text-zinc-500">
                 {loading ? "Loading tags…" : "No tags yet — type to create one."}
               </p>
@@ -215,7 +268,7 @@ export function TagSelect({
       <p className="mt-1 text-xs text-zinc-500">
         {full
           ? `Tag limit reached (${max}).`
-          : `${value.length}/${max} tags — search to reuse an existing one, or press Enter to create.`}
+          : `${value.length}/${max} tags — search to reuse one, or type new ones separated by commas.`}
       </p>
     </div>
   );
