@@ -59,22 +59,116 @@ html[data-theme="dark"] .bl-hero {
 .bl-hero h1 em { font-style: italic; color: var(--p700); display: block }
 .bl-hero p { font-size: 17px; color: var(--ink3); line-height: 1.75; max-width: 520px }
 
-/* ── TAG FILTER ── */
-/* Sits between the hero and the grid, on the same gutters as both. */
-.bl-tagbar {
+/* ── FILTER BAR ── */
+/* Sits between the hero and the grid, on the same gutters as both. One row:
+   search, the topic picker, the result count. The topic list itself lives
+   inside the picker's dropdown — printing every tag here turned the top of
+   the page into a wall of chips once the archive grew. */
+.bl-filters {
   max-width: 1200px; margin: 0 auto; padding: 34px 52px 0;
-  display: flex; flex-wrap: wrap; gap: 8px;
+  transition: opacity .18s;
 }
-.bl-tag {
+.bl-filters.is-busy { opacity: .55; pointer-events: none }
+.bl-filters-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px }
+
+.bl-search {
+  position: relative; flex: 1 1 260px; max-width: 380px;
+}
+.bl-search svg {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--ink3); pointer-events: none;
+}
+.bl-search input {
+  font-family: inherit; width: 100%;
+  padding: 10px 14px 10px 40px; font-size: 14px;
+  border-radius: var(--rpill); border: 1.5px solid var(--line);
+  background: var(--card); color: var(--ink);
+  transition: border-color .2s, box-shadow .2s;
+}
+.bl-search input::placeholder { color: var(--ink3) }
+.bl-search input:focus {
+  outline: none; border-color: var(--p400);
+  box-shadow: 0 0 0 3px rgba(102, 80, 196, .14);
+}
+.bl-search input::-webkit-search-cancel-button { cursor: pointer }
+
+/* ── TOPIC PICKER ── */
+.bl-ts { position: relative }
+.bl-ts-btn {
   font-family: inherit;
-  padding: 7px 16px; font-size: 13px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px; font-size: 14px; font-weight: 500;
   border-radius: var(--rpill); border: 1.5px solid var(--line);
   background: var(--card); color: var(--ink2);
-  cursor: pointer; transition: all .2s;
+  cursor: pointer; transition: border-color .2s, color .2s;
 }
-.bl-tag:hover { border-color: var(--p300); color: var(--p700); transform: translateY(-1px) }
-.bl-tag.active { background: var(--p700); border-color: var(--p700); color: #fff; font-weight: 600 }
-html[data-theme="dark"] .bl-tag.active { color: var(--p900) }
+.bl-ts-btn:hover, .bl-ts-btn.is-open { border-color: var(--p400); color: var(--p700) }
+.bl-ts-btn svg { width: 15px; height: 15px; transition: transform .2s }
+.bl-ts-btn.is-open svg { transform: rotate(180deg) }
+.bl-ts-count {
+  min-width: 20px; height: 20px; padding: 0 6px;
+  display: grid; place-items: center;
+  border-radius: var(--rpill); background: var(--p700); color: #fff;
+  font-size: 11px; font-weight: 700;
+}
+html[data-theme="dark"] .bl-ts-count { color: var(--p900) }
+
+.bl-ts-panel {
+  position: absolute; z-index: 30; top: calc(100% + 8px); left: 0;
+  width: min(340px, calc(100vw - 48px));
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; box-shadow: var(--sh-lg); overflow: hidden;
+}
+.bl-ts-search { padding: 12px 12px 8px; border-bottom: 1px solid var(--line) }
+.bl-ts-search input {
+  font-family: inherit; width: 100%;
+  padding: 9px 12px; font-size: 13.5px;
+  border-radius: 10px; border: 1.5px solid var(--line);
+  background: transparent; color: var(--ink);
+}
+.bl-ts-search input:focus { outline: none; border-color: var(--p400) }
+
+/* Capped height — the list scrolls instead of growing the page. */
+.bl-ts-list { max-height: 292px; overflow-y: auto; padding: 6px }
+.bl-ts-opt {
+  font-family: inherit;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 10px; font-size: 13.5px; text-align: left;
+  border: none; border-radius: 10px; background: none; color: var(--ink2);
+  cursor: pointer; transition: background .15s;
+}
+.bl-ts-opt:hover { background: var(--p100) }
+.bl-ts-opt.is-on { color: var(--p700); font-weight: 600 }
+.bl-ts-box {
+  width: 17px; height: 17px; flex-shrink: 0;
+  border-radius: 5px; border: 1.5px solid var(--line);
+  display: grid; place-items: center;
+  transition: background .15s, border-color .15s;
+}
+.bl-ts-opt.is-on .bl-ts-box { background: var(--p700); border-color: var(--p700) }
+.bl-ts-box svg { width: 11px; height: 11px; color: #fff; opacity: 0 }
+.bl-ts-opt.is-on .bl-ts-box svg { opacity: 1 }
+.bl-ts-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.bl-ts-n { font-size: 11.5px; color: var(--ink3); font-variant-numeric: tabular-nums }
+.bl-ts-none { padding: 18px 12px; text-align: center; font-size: 13px; color: var(--ink3) }
+
+.bl-count { margin-left: auto; font-size: 13.5px; color: var(--ink3) }
+
+/* ── SELECTED TOPICS ── */
+.bl-picked { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px }
+.bl-picked-chip {
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 12px; font-size: 13px; font-weight: 600;
+  border-radius: var(--rpill); border: 1.5px solid var(--p700);
+  background: var(--p700); color: #fff;
+  cursor: pointer; transition: opacity .2s;
+}
+html[data-theme="dark"] .bl-picked-chip { color: var(--p900) }
+.bl-picked-chip:hover { opacity: .82 }
+.bl-picked-chip svg { width: 12px; height: 12px }
+.bl-clear { font-size: 13px; color: var(--ink3); text-decoration: underline; text-underline-offset: 3px }
+.bl-clear:hover { color: var(--p700) }
 
 /* ── GRID ── */
 .bl-wrap { max-width: 1200px; margin: 0 auto; padding: 64px 52px 96px }
@@ -101,9 +195,21 @@ html[data-theme="dark"] .bl-tag.active { color: var(--p900) }
   box-shadow: var(--sh-md);
   border-color: var(--p300);
 }
+/* The tile keeps a soft shimmer until the lazy cover paints over it, so a
+   card scrolled into view never shows a bare hole. */
 .bl-media {
   position: relative; display: block;
-  aspect-ratio: 16 / 9; overflow: hidden; background: var(--p100);
+  aspect-ratio: 16 / 9; overflow: hidden;
+  background: linear-gradient(100deg, var(--p100) 30%, var(--card) 50%, var(--p100) 70%);
+  background-size: 220% 100%;
+  animation: bl-shimmer 1.4s linear infinite;
+}
+@keyframes bl-shimmer {
+  from { background-position: 130% 0 }
+  to   { background-position: -30% 0 }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bl-media { animation: none }
 }
 .bl-media img {
   width: 100%; height: 100%; display: block;
@@ -176,6 +282,30 @@ html[data-theme="dark"] .bl-avatar { color: var(--p900) }
   color: var(--ink3);
 }
 .bl-empty h2 { font-size: 24px; margin-bottom: 10px; color: var(--ink) }
+
+/* ── PAGINATION ── */
+.bl-pager {
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 10px; margin-top: 56px;
+}
+.bl-pager-nums { display: flex; align-items: center; gap: 6px }
+.bl-pager-num, .bl-pager-arrow {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 14px; font-weight: 500; color: var(--ink2);
+  border: 1.5px solid var(--line); border-radius: var(--rpill);
+  background: var(--card); text-decoration: none;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.bl-pager-num { min-width: 38px; height: 38px; padding: 0 12px; font-variant-numeric: tabular-nums }
+.bl-pager-arrow { height: 38px; padding: 0 16px }
+.bl-pager-arrow svg { width: 15px; height: 15px }
+a.bl-pager-num:hover, a.bl-pager-arrow:hover { border-color: var(--p400); color: var(--p700) }
+.bl-pager-num.is-current {
+  background: var(--p700); border-color: var(--p700); color: #fff; font-weight: 700;
+}
+html[data-theme="dark"] .bl-pager-num.is-current { color: var(--p900) }
+.bl-pager-arrow.is-off { opacity: .38; cursor: default }
+.bl-pager-gap { padding: 0 2px; color: var(--ink3) }
 
 /* ══════════════════════════════════════
    ARTICLE
@@ -256,11 +386,15 @@ html[data-theme="dark"] .bl-avatar { color: var(--p900) }
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   .bl-hero { padding: 52px 0 44px }
-  .bl-hero-inner, .bl-wrap, .bl-next, .bl-tagbar { padding-left: 24px; padding-right: 24px }
+  .bl-hero-inner, .bl-wrap, .bl-next, .bl-filters { padding-left: 24px; padding-right: 24px }
   .bl-wrap { padding-top: 40px; padding-bottom: 64px }
   .bl-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 22px }
 }
 @media (max-width: 560px) {
   .bl-grid { grid-template-columns: 1fr }
   .bl-article { padding: 36px 20px 64px }
+  /* The count would otherwise be pushed onto its own line by the picker. */
+  .bl-search { max-width: none }
+  .bl-count { margin-left: 0; width: 100% }
+  .bl-pager-arrow span { display: none }
 }

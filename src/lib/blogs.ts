@@ -28,6 +28,20 @@ export interface TagCount {
   count: number;
 }
 
+/** One page of the listing, as returned by GET /blogs/public/list. */
+export interface BlogPage {
+  items: BlogCard[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export const BLOG_PAGE_SIZE = 12;
+
+/** Cards above the fold load eagerly — the rest wait for the scroll. */
+export const BLOG_EAGER_CARDS = 3;
+
 /** Cover images are served by the API, not from /public. */
 export function coverUrl(coverPath: string): string | null {
   return coverPath ? `/api/blogs/cover/${encodeURIComponent(coverPath)}` : null;
@@ -58,6 +72,53 @@ export const getBlogs = cache(async (): Promise<BlogCard[]> => {
     return [];
   }
 });
+
+/**
+ * One page of published posts. Tags arrive as a comma-separated string
+ * rather than an array so React's `cache` can memoise on the arguments.
+ */
+export const getBlogPage = cache(
+  async (page: number, tags: string, q: string): Promise<BlogPage> => {
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(BLOG_PAGE_SIZE),
+    });
+    if (tags) params.set("tags", tags);
+    if (q) params.set("q", q);
+
+    const empty: BlogPage = {
+      items: [],
+      total: 0,
+      page: 1,
+      limit: BLOG_PAGE_SIZE,
+      totalPages: 1,
+    };
+
+    try {
+      const res = await fetch(`${API}/blogs/public/list?${params}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return empty;
+      return (await res.json()) as BlogPage;
+    } catch {
+      return empty;
+    }
+  },
+);
+
+/** Canonical /blogs URL for a filter state — omits every default. */
+export function blogsHref(opts: {
+  page?: number;
+  tags?: string[];
+  q?: string;
+}): string {
+  const params = new URLSearchParams();
+  if (opts.tags?.length) params.set("tags", opts.tags.join(","));
+  if (opts.q) params.set("q", opts.q);
+  if (opts.page && opts.page > 1) params.set("page", String(opts.page));
+  const qs = params.toString();
+  return qs ? `/blogs?${qs}` : "/blogs";
+}
 
 export const getBlogTags = cache(async (): Promise<TagCount[]> => {
   try {

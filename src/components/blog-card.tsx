@@ -19,7 +19,18 @@ function PlaceholderMark() {
   );
 }
 
-export default function BlogCard({ post }: { post: Blog }) {
+/**
+ * `eager` is reserved for the cards above the fold — everything else keeps
+ * the browser's lazy loading, so a page of covers costs one screenful of
+ * requests rather than twelve.
+ */
+export default function BlogCard({
+  post,
+  eager = false,
+}: {
+  post: Blog;
+  eager?: boolean;
+}) {
   const cover = coverUrl(post.coverPath);
   const href = `/blogs/${post.slug}`;
 
@@ -33,7 +44,9 @@ export default function BlogCard({ post }: { post: Blog }) {
             <img
               src={cover}
               alt={post.coverAlt || post.title}
-              loading="lazy"
+              loading={eager ? "eager" : "lazy"}
+              fetchPriority={eager ? "high" : "auto"}
+              decoding="async"
               width={640}
               height={360}
             />

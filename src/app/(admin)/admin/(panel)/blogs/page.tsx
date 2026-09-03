@@ -1,14 +1,24 @@
 "use client";
 
-import { ExternalLink, ImageOff, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
+import {
+  ExternalLink,
+  ImageOff,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
-import RichEditor from "@/components/rich-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Pagination } from "@/components/ui/pagination";
 import { Select } from "@/components/ui/select";
 import {
   Table,
@@ -18,28 +28,51 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TagSelect } from "@/components/ui/tag-select";
 import { Textarea } from "@/components/ui/textarea";
 import { api, apiUpload } from "@/lib/api";
 
-interface Blog {
+// TipTap and its ProseMirror deps are the heaviest thing on this route and
+// only the dialog needs them — split them out so the table paints first.
+const RichEditor = dynamic(() => import("@/components/rich-editor"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 animate-pulse rounded-lg border border-zinc-200 bg-zinc-50" />
+  ),
+});
+
+/** A row of the admin table — everything except the rich-text body. */
+interface BlogRow {
   id: string;
   slug: string;
   title: string;
   excerpt: string;
-  bodyHtml: string;
   status: "DRAFT" | "PUBLISHED";
   coverPath: string;
   coverAlt: string;
   author: string;
   tags: string[];
   publishedAt: string | null;
-  metaDescription: string;
-  metaKeywords: string;
-  ogImage: string;
   createdAt: string;
 }
 
-type Form = Omit<Blog, "id" | "publishedAt" | "createdAt"> & { tagsText: string };
+/** The full record, fetched only for the post being edited. */
+interface Blog extends BlogRow {
+  bodyHtml: string;
+  metaDescription: string;
+  metaKeywords: string;
+  ogImage: string;
+}
+
+interface Paged<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+type Form = Omit<Blog, "id" | "publishedAt" | "createdAt">;
 
 const EMPTY: Form = {
   slug: "",
@@ -51,7 +84,6 @@ const EMPTY: Form = {
   coverAlt: "",
   author: "Aksharum",
   tags: [],
-  tagsText: "",
   metaDescription: "",
   metaKeywords: "",
   ogImage: "",
@@ -67,23 +99,72 @@ function slugify(title: string): string {
 }
 
 export default function BlogsAdminPage() {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [rows, setRows] = useState<BlogRow[]>([]);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [editing, setEditing] = useState<Blog | null>(null);
+
+  // Table controls. `search` is the debounced mirror of the input.
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [queryText, setQueryText] = useState("");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+
+  const [editing, setEditing] = useState<BlogRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Form>(EMPTY);
+  const [loadingPost, setLoadingPost] = useState(false);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   // Blank once the admin edits the slug by hand, so we stop overwriting it.
   const [slugLocked, setSlugLocked] = useState(false);
 
+  // Tag catalogue for the picker — fetched the first time a form opens.
+  const [tagOptions, setTagOptions] = useState<{ tag: string; count: number }[]>(
+    [],
+  );
+  const [tagsLoaded, setTagsLoaded] = useState(false);
+
   const load = useCallback(() => {
-    api<Blog[]>("/blogs/all")
-      .then(setBlogs)
-      .catch((e) => setError(e.message));
-  }, []);
+    setLoading(true);
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (search) params.set("q", search);
+    if (status) params.set("status", status);
+
+    api<Paged<BlogRow>>(`/blogs/all?${params}`)
+      .then((res) => {
+        setRows(res.items);
+        setMeta({ total: res.total, totalPages: res.totalPages });
+        // The API clamps an out-of-range page; follow it so the controls
+        // and the rows on screen never disagree.
+        if (res.page !== page) setPage(res.page);
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [page, limit, search, status]);
 
   useEffect(load, [load]);
+
+  // Debounce the search box so typing doesn't fire a request per keystroke.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSearch(queryText.trim());
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(id);
+  }, [queryText]);
+
+  const loadTags = useCallback(() => {
+    if (tagsLoaded) return;
+    api<{ tag: string; count: number }[]>("/blogs/tags")
+      .then(setTagOptions)
+      .catch(() => setTagOptions([]))
+      .finally(() => setTagsLoaded(true));
+  }, [tagsLoaded]);
 
   function openNew() {
     setEditing(null);
@@ -91,14 +172,26 @@ export default function BlogsAdminPage() {
     setSlugLocked(false);
     setError("");
     setShowForm(true);
+    loadTags();
   }
 
-  function openEdit(blog: Blog) {
-    setEditing(blog);
-    setForm({ ...blog, tagsText: blog.tags.join(", ") });
+  // The table row carries no body — pull the full post before editing it.
+  async function openEdit(row: BlogRow) {
+    setEditing(row);
+    setForm({ ...EMPTY, ...row });
     setSlugLocked(true);
     setError("");
     setShowForm(true);
+    setLoadingPost(true);
+    loadTags();
+    try {
+      const full = await api<Blog>(`/blogs/${row.id}`);
+      setForm({ ...full });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load this post");
+    } finally {
+      setLoadingPost(false);
+    }
   }
 
   function setTitle(title: string) {
@@ -129,11 +222,6 @@ export default function BlogsAdminPage() {
     setBusy(true);
     setError("");
 
-    const tags = form.tagsText
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
     const payload = {
       slug: form.slug,
       title: form.title,
@@ -143,7 +231,7 @@ export default function BlogsAdminPage() {
       coverPath: form.coverPath,
       coverAlt: form.coverAlt,
       author: form.author,
-      tags,
+      tags: form.tags,
       metaDescription: form.metaDescription,
       metaKeywords: form.metaKeywords,
       ogImage: form.ogImage,
@@ -159,7 +247,11 @@ export default function BlogsAdminPage() {
         await api("/blogs", { method: "POST", body: JSON.stringify(payload) });
       }
       setShowForm(false);
-      load();
+      // A new tag coined in the picker belongs in the next form's catalogue.
+      setTagsLoaded(false);
+      // New posts sort to the top, so jump back to page one to show it.
+      if (!editing && page !== 1) setPage(1);
+      else load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -167,11 +259,14 @@ export default function BlogsAdminPage() {
     }
   }
 
-  async function remove(blog: Blog) {
-    if (!window.confirm(`Delete "${blog.title}"? This cannot be undone.`)) return;
+  async function remove(row: BlogRow) {
+    if (!window.confirm(`Delete "${row.title}"? This cannot be undone.`)) return;
     try {
-      await api(`/blogs/${blog.id}`, { method: "DELETE" });
-      load();
+      await api(`/blogs/${row.id}`, { method: "DELETE" });
+      setTagsLoaded(false);
+      // Emptying the last page would otherwise leave the table blank.
+      if (rows.length === 1 && page > 1) setPage(page - 1);
+      else load();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
     }
@@ -180,6 +275,8 @@ export default function BlogsAdminPage() {
   const coverPreview = form.coverPath
     ? `/api/blogs/cover/${encodeURIComponent(form.coverPath)}`
     : null;
+
+  const filtered = search.length > 0 || status.length > 0;
 
   return (
     <div className="space-y-6">
@@ -212,6 +309,30 @@ export default function BlogsAdminPage() {
 
       <Card>
         <CardContent className="p-0">
+          <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-4 py-3">
+            <div className="relative flex-1 sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              <Input
+                value={queryText}
+                onChange={(e) => setQueryText(e.target.value)}
+                placeholder="Search title, slug, author or tag…"
+                className="pl-9"
+              />
+            </div>
+            <Select
+              className="h-9 w-auto"
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="">All statuses</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="DRAFT">Draft</option>
+            </Select>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -223,14 +344,25 @@ export default function BlogsAdminPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {blogs.length === 0 ? (
+              {loading && rows.length === 0 ? (
+                // Skeleton rows keep the table height stable between pages.
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
+                    <TableCell colSpan={5}>
+                      <div className="h-10 animate-pulse rounded bg-zinc-100" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="py-10 text-center text-zinc-500">
-                    No posts yet. Create your first one.
+                    {filtered
+                      ? "No posts match this search."
+                      : "No posts yet. Create your first one."}
                   </TableCell>
                 </TableRow>
               ) : (
-                blogs.map((blog) => (
+                rows.map((blog) => (
                   <TableRow key={blog.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -239,7 +371,11 @@ export default function BlogsAdminPage() {
                           <img
                             src={`/api/blogs/cover/${encodeURIComponent(blog.coverPath)}`}
                             alt=""
-                            className="h-10 w-16 shrink-0 rounded object-cover"
+                            loading="lazy"
+                            decoding="async"
+                            width={64}
+                            height={40}
+                            className="h-10 w-16 shrink-0 rounded bg-zinc-100 object-cover"
                           />
                         ) : (
                           <div className="flex h-10 w-16 shrink-0 items-center justify-center rounded bg-gradient-to-br from-brand-600 to-brand-400 text-white">
@@ -258,12 +394,17 @@ export default function BlogsAdminPage() {
                       {blog.author}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap items-center gap-1">
                         {blog.tags.slice(0, 3).map((tag) => (
                           <Badge key={tag} variant="secondary">
                             {tag}
                           </Badge>
                         ))}
+                        {blog.tags.length > 3 && (
+                          <span className="text-xs text-zinc-500">
+                            +{blog.tags.length - 3}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -286,6 +427,21 @@ export default function BlogsAdminPage() {
               )}
             </TableBody>
           </Table>
+
+          {meta.total > 0 && (
+            <Pagination
+              page={page}
+              totalPages={meta.totalPages}
+              total={meta.total}
+              limit={limit}
+              busy={loading}
+              onPage={setPage}
+              onLimit={(n) => {
+                setLimit(n);
+                setPage(1);
+              }}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -299,7 +455,10 @@ export default function BlogsAdminPage() {
             <Button variant="outline" onClick={() => setShowForm(false)}>
               Cancel
             </Button>
-            <Button onClick={save} disabled={busy || !form.title || !form.slug}>
+            <Button
+              onClick={save}
+              disabled={busy || loadingPost || !form.title || !form.slug}
+            >
               {busy ? "Saving…" : "Save post"}
             </Button>
           </>
@@ -347,15 +506,14 @@ export default function BlogsAdminPage() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="tags">Tags</Label>
-              <Input
-                id="tags"
-                value={form.tagsText}
-                onChange={(e) => setForm((f) => ({ ...f, tagsText: e.target.value }))}
-                placeholder="Fees, Admissions, Product"
+            <div className="sm:col-span-2">
+              <Label>Tags</Label>
+              <TagSelect
+                value={form.tags}
+                options={tagOptions}
+                loading={!tagsLoaded}
+                onChange={(tags) => setForm((f) => ({ ...f, tags }))}
               />
-              <p className="mt-1 text-xs text-zinc-500">Comma-separated</p>
             </div>
 
             <div>
@@ -397,7 +555,9 @@ export default function BlogsAdminPage() {
                 <img
                   src={coverPreview}
                   alt=""
-                  className="h-24 w-40 rounded-lg border border-zinc-200 object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-24 w-40 rounded-lg border border-zinc-200 bg-zinc-100 object-cover"
                 />
               ) : (
                 <div className="flex h-24 w-40 items-center justify-center rounded-lg bg-gradient-to-br from-brand-600 via-brand-500 to-brand-400 text-white">
@@ -449,10 +609,17 @@ export default function BlogsAdminPage() {
           {/* ── Body ── */}
           <div>
             <Label>Content</Label>
-            <RichEditor
-              value={form.bodyHtml}
-              onChange={(html) => setForm((f) => ({ ...f, bodyHtml: html }))}
-            />
+            {loadingPost ? (
+              <div className="h-64 animate-pulse rounded-lg border border-zinc-200 bg-zinc-50" />
+            ) : (
+              <RichEditor
+                // The editor seeds itself from `value` once; remounting it per
+                // post is what makes the lazily fetched body show up.
+                key={editing?.id ?? "new"}
+                value={form.bodyHtml}
+                onChange={(html) => setForm((f) => ({ ...f, bodyHtml: html }))}
+              />
+            )}
           </div>
 
           {/* ── SEO ── */}
