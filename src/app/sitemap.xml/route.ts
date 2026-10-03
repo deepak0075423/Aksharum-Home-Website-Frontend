@@ -1,4 +1,12 @@
 import { getBlogs } from "@/lib/blogs";
+import { getJobs } from "@/lib/jobs";
+import {
+  LOCATIONS_HUB,
+  LOCATIONS_UPDATED,
+  placePath,
+  PLACES,
+  sitemapPriority,
+} from "@/lib/locations";
 import { fileRoutesNotInCms, getPublicPages } from "@/lib/pages";
 import { getSeoFlags, notFound } from "@/lib/seo-flags";
 import { canonicalPath, SITE_URL } from "@/lib/seo";
@@ -19,6 +27,7 @@ const PRIORITY: Record<string, number> = {
   about: 0.7,
   career: 0.6,
   blogs: 0.7,
+  "school-erp": 0.9,
   privacy: 0.3,
   terms: 0.3,
   "terms-conditions": 0.3,
@@ -72,7 +81,11 @@ export async function GET(): Promise<Response> {
   const flags = await getSeoFlags();
   if (!flags.sitemap) return notFound();
 
-  const [pages, posts] = await Promise.all([getPublicPages(), getBlogs()]);
+  const [pages, posts, jobs] = await Promise.all([
+    getPublicPages(),
+    getBlogs(),
+    getJobs(),
+  ]);
 
   // Keyed by URL so a page reachable two ways is only ever listed once.
   const entries = new Map<string, UrlEntry>();
@@ -86,6 +99,36 @@ export async function GET(): Promise<Response> {
       lastmod: new Date(page.updatedAt).toISOString(),
       changefreq: page.slug === "home" ? "daily" : "weekly",
       priority: priorityFor(page.slug),
+    });
+  }
+
+  // Location landing pages live in the codebase (src/lib/locations), so their
+  // lastmod is the date that copy was last edited, not the request time.
+  const locationsLastmod = new Date(LOCATIONS_UPDATED).toISOString();
+  add({
+    loc: `${SITE_URL}${LOCATIONS_HUB}`,
+    lastmod: locationsLastmod,
+    changefreq: "monthly",
+    priority: priorityFor("school-erp"),
+  });
+  for (const place of PLACES) {
+    add({
+      loc: `${SITE_URL}${placePath(place.slug)}`,
+      lastmod: locationsLastmod,
+      changefreq: "monthly",
+      priority: sitemapPriority(place),
+    });
+  }
+
+  // Open roles only: a filled role's page is noindex, and Google's job
+  // listings must not show positions that can no longer be applied for.
+  for (const job of jobs) {
+    if (job.status !== "OPEN") continue;
+    add({
+      loc: `${SITE_URL}${job.path}`,
+      lastmod: new Date(job.updatedAt).toISOString(),
+      changefreq: "weekly",
+      priority: 0.6,
     });
   }
 

@@ -92,6 +92,11 @@ tl.fromTo('#h-title', {autoAlpha:0,y:44},{autoAlpha:1,y:0,duration:1,ease:'power
   .fromTo('#h-btns',  {autoAlpha:0,y:20},{autoAlpha:1,y:0,duration:.75,ease:'power3.out'},'-=.55')
   .fromTo('#studentCol',{autoAlpha:0,x:-30},{autoAlpha:1,x:0,duration:.9,ease:'power3.out'},'-=.85')
   .fromTo('#dashCard', {autoAlpha:0,x:40,scale:.95},{autoAlpha:1,x:0,scale:1,duration:1,ease:'power3.out'},'-=.75');
+// Crawlers and headless renderers often don't run requestAnimationFrame, which
+// would leave the hero frozen at opacity 0 — its text invisible to search
+// engines. Snap to the end state if the intro hasn't finished on its own.
+setTimeout(function(){ if(tl.progress && tl.progress() < 1) tl.progress(1); }, 3000);
+
 
 // Scroll reveal
 const io=new IntersectionObserver(entries=>{

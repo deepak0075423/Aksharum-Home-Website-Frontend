@@ -97,6 +97,11 @@ htl.fromTo('#fEy',{opacity:0,y:14},{opacity:1,y:0,duration:.65,ease:'power3.out'
    .fromTo('#fSub',{opacity:0,y:22},{opacity:1,y:0,duration:.8,ease:'power3.out'},'-=.6')
    .fromTo('#fBtns',{opacity:0,y:16},{opacity:1,y:0,duration:.65,ease:'power3.out'},'-=.5')
    .fromTo('#fHR',{opacity:0,x:48,scale:.94},{opacity:1,x:0,scale:1,duration:1.1,ease:'back.out(1.2)'},'-=.9');
+// Crawlers and headless renderers often don't run requestAnimationFrame, which
+// would leave the hero frozen at opacity 0 — its text invisible to search
+// engines. Snap to the end state if the intro hasn't finished on its own.
+setTimeout(function(){ if(htl.progress && htl.progress() < 1) htl.progress(1); }, 3000);
+
 
 // CHAOS
 gsap.fromTo('#fChaosHd',{opacity:0,y:24},{opacity:1,y:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:'#fChaos',start:'top 78%',once:true}});

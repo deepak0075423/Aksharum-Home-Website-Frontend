@@ -1,0 +1,18 @@
+/* "School ERP across India" link row, injected into the shared footer by
+   src/lib/footer-links.ts. Matches the footer column styles in one.css. */
+.f-areas { padding: 0 0 26px }
+.f-areas h4 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .12em; color: var(--p400); margin: 0 0 13px;
+}
+.f-areas ul {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 9px 20px;
+}
+.f-areas a {
+  font-size: 13px; color: rgba(255, 255, 255, .5);
+  text-decoration: none; transition: color .2s;
+}
+.f-areas a:hover { color: #fff }
+@media print { .f-areas { display: none } }

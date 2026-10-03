@@ -24,6 +24,12 @@ export const viewport: Viewport = {
 // Site-wide metadata defaults. `metadataBase` makes every relative OG/canonical
 // URL resolve to the production origin; per-page values in generateMetadata
 // (title, description, canonical, images) override these.
+// Search Console / Bing Webmaster Tools ownership tags. Set the token from
+// each tool's "HTML tag" method in the server env (read at runtime, so no
+// rebuild is needed); unset means no tag. DNS verification needs neither.
+const GOOGLE_VERIFICATION = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+const BING_VERIFICATION = process.env.BING_SITE_VERIFICATION?.trim();
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: DEFAULT_TITLE, template: `%s | ${SITE_NAME}` },
@@ -35,6 +41,14 @@ export const metadata: Metadata = {
   publisher: SITE_NAME,
   category: "Education Technology",
   formatDetection: { telephone: false, address: false, email: false },
+  ...(GOOGLE_VERIFICATION || BING_VERIFICATION
+    ? {
+        verification: {
+          ...(GOOGLE_VERIFICATION ? { google: GOOGLE_VERIFICATION } : {}),
+          ...(BING_VERIFICATION ? { other: { "msvalidate.01": BING_VERIFICATION } } : {}),
+        },
+      }
+    : {}),
   robots: {
     index: true,
     follow: true,

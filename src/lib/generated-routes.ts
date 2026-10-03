@@ -5,4 +5,5 @@
 
 export const STATIC_ROUTES = [
   "/blogs",
+  "/school-erp",
 ] as const;

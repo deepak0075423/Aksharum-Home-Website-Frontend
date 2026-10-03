@@ -85,6 +85,11 @@ htl
 .fromTo('#crBtns',{ opacity:0, y:16 },{ opacity:1, y:0, duration:.65, ease:'power3.out' },'-=.5')
 .fromTo('#crPerks',{ opacity:0, y:12 },{ opacity:1, y:0, duration:.6, ease:'power3.out' },'-=.4')
 .fromTo('#crHeroRight',{ opacity:0, x:48, scale:.94 },{ opacity:1, x:0, scale:1, duration:1.1, ease:'back.out(1.2)' },'-=.9');
+// Crawlers and headless renderers often don't run requestAnimationFrame, which
+// would leave the hero frozen at opacity 0 — its text invisible to search
+// engines. Snap to the end state if the intro hasn't finished on its own.
+setTimeout(function(){ if(htl.progress && htl.progress() < 1) htl.progress(1); }, 3000);
+
 
 /* ═════════════ WHY SECTION ═════════════ */
 
@@ -185,11 +190,25 @@ function crHtmlHasContent(html){
   return html.replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim().length > 0;
 }
 
+// The role's own page (/career/<title-slug>-<id>). The API sends it as
+// `path`; the fallback mirrors jobSlug() in the backend for older responses.
+function crJobPath(job){
+  if(job.path) return job.path;
+  const slug = String(job.title || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'').slice(0,80).replace(/-+$/,'');
+  return '/career/' + (slug ? slug + '-' : '') + job.id;
+}
+
+// Rows are real links so each role is crawlable and can be opened in a new
+// tab or shared; a plain click still opens the quick-view modal (see
+// crApplyRoleRowEffects). Keep in step with roleRow() in the backend's
+// src/jobs/career-roles.ts, which server-renders this same list.
 function crRoleRow(job, idx){
   const ico = CR_DEPT_ICONS[(job.department||'').toLowerCase()] || CR_DEPT_ICONS.default;
   const filled = job.status === 'FILLED';
   const openLbl = crOpeningsLabel(job.openings);
-  return '<div class="cr-role-row" data-idx="' + idx + '">' +
+  return '<a class="cr-role-row" href="' + crEsc(crJobPath(job)) + '" data-idx="' + idx + '">' +
     '<div class="cr-role-left">' +
       '<div class="cr-role-ico">' + ico + '</div>' +
       '<div>' +
@@ -205,7 +224,7 @@ function crRoleRow(job, idx){
       '</div>' +
     '</div>' +
     '<div class="cr-role-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>' +
-  '</div>';
+  '</a>';
 }
 
 /* ── JOB DETAIL MODAL — opened when a role row is clicked ── */
@@ -232,6 +251,7 @@ function crEnsureModal(){
       '<div class="cr-modal-meta"></div>' +
       '<div class="cr-modal-body"></div>' +
       '<div class="cr-modal-foot">' +
+        '<a class="cr-btn-sec cr-modal-page" href="/career">View full job page</a>' +
         '<button class="cr-btn-pri cr-modal-apply" type="button">Apply for this role <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>' +
       '</div>' +
     '</div>';
@@ -265,6 +285,8 @@ function crOpenJobModal(job){
     ? '<div class="cr-modal-desc">' + desc + '</div>'
     : '<p class="cr-modal-desc cr-modal-empty">No additional details were provided for this role. Apply below and tell us why you’d be a great fit.</p>';
 
+  el.querySelector('.cr-modal-page').setAttribute('href', crJobPath(job));
+
   const applyBtn = el.querySelector('.cr-modal-apply');
   applyBtn.style.display = filled ? 'none' : '';
   applyBtn.onclick = ()=>{
@@ -289,15 +311,19 @@ function crApplyRoleRowEffects(){
     scrollTrigger:{ trigger:'.cr-roles-grid', start:'top 82%', once:true } });
   attachTilt(document.querySelectorAll('.cr-role-row'));
   document.querySelectorAll('.cr-role-row').forEach(row=>{
-    row.addEventListener('click',()=>{
+    row.addEventListener('click',e=>{
+      // Cmd/Ctrl/Shift/middle-click: let the browser open the role's page.
+      if(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
       const idx = row.getAttribute('data-idx');
       const job = idx !== null ? crJobs[Number(idx)] : null;
       if(job){
+        e.preventDefault();
         crOpenJobModal(job);
-      } else {
+      } else if(!row.getAttribute('href')){
         // static fallback rows carry no job data — just jump to the form
         document.getElementById('crFormSec').scrollIntoView({ behavior:'smooth' });
       }
+      // otherwise: a server-rendered link whose job list never loaded — follow it
     });
   });
 }
@@ -321,6 +347,14 @@ function crApplyRoleRowEffects(){
           '<option value="">Select a role</option>' +
           open.map(j=>'<option data-job-id="' + crEsc(j.id) + '">' + crEsc(j.title) + '</option>').join('') +
           '<option>Other / General Application</option>';
+        // Arriving from a job page's "Apply" button (/career?job=<id>#crFormSec).
+        const wanted = new URLSearchParams(location.search).get('job');
+        const opt = wanted && Array.from(roleSel.options).find(o=>o.dataset.jobId === wanted);
+        if(opt){
+          roleSel.value = opt.value;
+          const formSec = document.getElementById('crFormSec');
+          if(formSec) formSec.scrollIntoView({ behavior:'smooth' });
+        }
       }
     }
   }catch(err){ /* static markup stays as fallback */ }

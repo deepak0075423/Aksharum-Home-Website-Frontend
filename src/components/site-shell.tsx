@@ -1,4 +1,5 @@
 import { cache, type ReactNode } from "react";
+import { withAreaLinks } from "@/lib/footer-links";
 import LegacyScripts from "./legacy-scripts";
 
 const API = process.env.API_URL ?? "http://localhost:4000/api";
@@ -72,6 +73,7 @@ export function SiteShell({
       {stylesheets.map((href) => (
         <link key={href} rel="stylesheet" href={href} precedence="page" />
       ))}
+      <link rel="stylesheet" href="/css/footer-areas.css" precedence="footer" />
       {/* display:contents keeps the legacy `body > *` selectors working */}
       <div
         style={{ display: "contents" }}
@@ -82,7 +84,7 @@ export function SiteShell({
       <main className="bl-main">{children}</main>
       <div
         style={{ display: "contents" }}
-        dangerouslySetInnerHTML={{ __html: shell.footerHtml }}
+        dangerouslySetInnerHTML={{ __html: withAreaLinks(shell.footerHtml) }}
       />
       <LegacyScripts scripts={SHELL_SCRIPTS} />
     </>

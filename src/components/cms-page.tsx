@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { withAreaLinks } from "@/lib/footer-links";
 import LegacyScripts from "./legacy-scripts";
 
 const API = process.env.API_URL ?? "http://localhost:4000/api";
@@ -39,12 +40,13 @@ export function CmsPageRenderer({ page }: { page: CmsPage }) {
       {page.cssLinks.map((href) => (
         <link key={href} rel="stylesheet" href={href} precedence="legacy" />
       ))}
+      <link rel="stylesheet" href="/css/footer-areas.css" precedence="footer" />
       {/* display:contents keeps the legacy body > * CSS structure intact;
           shared header/footer are composed around the page content */}
       <div
         style={{ display: "contents" }}
         dangerouslySetInnerHTML={{
-          __html: page.headerHtml + page.bodyHtml + page.footerHtml,
+          __html: page.headerHtml + page.bodyHtml + withAreaLinks(page.footerHtml),
         }}
       />
       <LegacyScripts scripts={page.scripts} />

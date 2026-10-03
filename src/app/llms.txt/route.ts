@@ -1,4 +1,6 @@
 import { getBlogs } from "@/lib/blogs";
+import { getJobs } from "@/lib/jobs";
+import { HUB, LOCATIONS_HUB, placePath, plainName, PLACES } from "@/lib/locations";
 import { fileRoutesNotInCms, getPublicPages, type PublicPage } from "@/lib/pages";
 import { getSeoFlags, notFound } from "@/lib/seo-flags";
 import {
@@ -45,10 +47,11 @@ export async function GET(): Promise<Response> {
   const flags = await getSeoFlags();
   if (!flags.llms) return notFound();
 
-  const [pages, posts, site] = await Promise.all([
+  const [pages, posts, site, jobs] = await Promise.all([
     getPublicPages(),
     getBlogs(),
     getSiteInfo(),
+    getJobs(),
   ]);
 
   const name = site?.siteName || SITE_NAME;
@@ -86,6 +89,34 @@ export async function GET(): Promise<Response> {
     lines.push("");
   }
 
+  lines.push("## School ERP by location", "");
+  lines.push(link("All locations", `${SITE_URL}${LOCATIONS_HUB}`, HUB.description));
+  for (const place of PLACES) {
+    lines.push(
+      link(
+        `School ERP in ${plainName(place)}`,
+        `${SITE_URL}${placePath(place.slug)}`,
+        place.description,
+      ),
+    );
+  }
+  lines.push("");
+
+  const openJobs = jobs.filter((j) => j.status === "OPEN");
+  if (openJobs.length > 0) {
+    lines.push("## Careers", "");
+    for (const job of openJobs) {
+      lines.push(
+        link(
+          job.title,
+          `${SITE_URL}${job.path}`,
+          [job.type, job.location, job.department].filter(Boolean).join(" · "),
+        ),
+      );
+    }
+    lines.push("");
+  }
+
   if (posts.length > 0) {
     lines.push("## Blog", "");
     lines.push(link("Blog index", `${SITE_URL}/blogs`, "All published articles."));
@@ -98,7 +129,7 @@ export async function GET(): Promise<Response> {
   // Pages that live in the codebase rather than the CMS. /blogs is already
   // covered above whenever there are posts, so skip it here.
   const extra = fileRoutesNotInCms(pages).filter(
-    (route) => !(route === "/blogs" && posts.length > 0),
+    (route) => !(route === "/blogs" && posts.length > 0) && route !== LOCATIONS_HUB,
   );
   if (extra.length > 0) {
     lines.push("## Other", "");

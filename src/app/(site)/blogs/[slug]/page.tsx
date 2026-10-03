@@ -99,7 +99,7 @@ export default async function BlogPostPage({ params }: { params: Params }) {
   });
 
   return (
-    <SiteShell shell={shell}>
+    <SiteShell shell={shell} stylesheets={["/css/blog.css", "/css/landing.css"]}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -159,6 +159,22 @@ export default async function BlogPostPage({ params }: { params: Params }) {
           className="bl-content"
           dangerouslySetInnerHTML={{ __html: post.bodyHtml }}
         />
+
+        <aside className="bl-cta" aria-labelledby="bl-cta-title">
+          <h2 id="bl-cta-title">Run your whole school on one platform</h2>
+          <p>
+            Aksharum is a cloud school ERP for admissions, attendance, fees,
+            exams and parent communication — set up in a single working day.
+          </p>
+          <div className="lc-actions">
+            <a className="lc-btn" href="/demo">
+              Book a free demo →
+            </a>
+            <a className="lc-btn-ghost" href="/school-erp">
+              School ERP in your city
+            </a>
+          </div>
+        </aside>
       </article>
 
       {post.related.length > 0 && (

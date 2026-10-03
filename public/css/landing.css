@@ -1,0 +1,294 @@
+/* ══════════════════════════════════════
+   LANDING — /school-erp location pages and /career/<role> job pages
+
+   Layers on top of one.css (palette tokens, resets, nav/footer chrome) and
+   blog.css (--card / shadow tokens, .bl-main, the blog cards reused in the
+   reading lists, and the .bl-content rich-text styles reused for job
+   descriptions). Every colour comes from those tokens, so dark mode follows
+   html[data-theme="dark"] without per-rule overrides, except where noted.
+══════════════════════════════════════ */
+
+.lc-wrap { max-width: 1200px; margin: 0 auto; padding: 0 52px }
+.lc-narrow { max-width: 860px }
+
+/* ── HERO ── */
+.lc-hero {
+  background: linear-gradient(160deg, #f8f6ff 0%, #f1ecff 40%, #ede8ff 100%);
+  padding: 40px 0 64px;
+  position: relative;
+  overflow: hidden;
+}
+html[data-theme="dark"] .lc-hero {
+  background: linear-gradient(160deg, #171126 0%, #1d1430 45%, #211735 100%);
+}
+.lc-hero::before {
+  content: ''; position: absolute;
+  top: -120px; right: -100px; width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(184, 164, 240, .18), transparent 65%);
+  pointer-events: none;
+}
+.lc-hero .lc-wrap { position: relative; z-index: 2 }
+
+.lc-crumbs ol {
+  list-style: none; margin: 0 0 30px; padding: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink3);
+}
+.lc-crumbs li { display: inline-flex; align-items: center; gap: 6px }
+.lc-crumbs li + li::before { content: '›'; opacity: .55 }
+.lc-crumbs a { color: var(--ink3); text-decoration: none; transition: color .2s }
+.lc-crumbs a:hover { color: var(--p700) }
+.lc-crumbs [aria-current] { color: var(--ink2); font-weight: 600 }
+
+.lc-ey {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'DM Sans', sans-serif; line-height: 1.4;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .13em; color: var(--p600); margin-bottom: 16px;
+}
+.lc-ey::before { content: ''; width: 18px; height: 2px; background: var(--p400); border-radius: 2px }
+
+.lc-hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 4.6vw, 58px); font-weight: 800;
+  line-height: 1.02; letter-spacing: -.035em; margin-bottom: 20px;
+  color: var(--ink); max-width: 880px;
+}
+.lc-hero h1 em { font-style: italic; color: var(--p700); display: block }
+.lc-lead { font-size: 17.5px; color: var(--ink2); line-height: 1.75; max-width: 760px }
+
+.lc-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px }
+.lc-btn, .lc-btn-ghost {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 13px 26px; border-radius: var(--rpill);
+  font-size: 15px; font-weight: 700; text-decoration: none;
+  transition: transform .25s, box-shadow .25s, background .25s, border-color .25s, color .25s;
+}
+.lc-btn {
+  background: var(--p700); color: #fff;
+  box-shadow: 0 8px 24px rgba(93, 63, 184, .28);
+}
+.lc-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(93, 63, 184, .34); background: var(--p800) }
+/* --p700/--p800 turn pale in dark mode; use the nav's demo-button gradient. */
+html[data-theme="dark"] .lc-btn { background: linear-gradient(135deg, #7c5fd6, #a88cff); color: #fff }
+html[data-theme="dark"] .lc-btn:hover { background: linear-gradient(135deg, #8f73e6, #c7b3ff) }
+.lc-btn svg, .lc-btn-ghost svg { width: 15px; height: 15px }
+.lc-btn-ghost {
+  background: var(--card); color: var(--p700);
+  border: 1.5px solid var(--p300);
+}
+.lc-btn-ghost:hover { border-color: var(--p500); transform: translateY(-2px) }
+
+.lc-facts {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px;
+  margin: 40px 0 0; padding: 22px 24px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  box-shadow: var(--sh); max-width: 920px;
+}
+.lc-facts dt {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+  color: var(--ink3); margin-bottom: 10px;
+}
+.lc-facts dd { margin: 0 }
+
+.lc-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 7px }
+.lc-chips li {
+  font-size: 12.5px; font-weight: 600; color: var(--p700);
+  background: var(--p100); border-radius: var(--rpill); padding: 5px 12px;
+}
+.lc-chips.is-plain li { color: var(--ink2); background: transparent; border: 1px solid var(--line) }
+
+/* ── SECTIONS ── */
+.lc-sec { padding: 72px 0 }
+.lc-alt { background: var(--p50) }
+.lc-hd { max-width: 720px; margin-bottom: 34px }
+.lc-hd h2, .lc-sec > .lc-wrap > h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(26px, 3vw, 36px); font-weight: 700;
+  letter-spacing: -.02em; line-height: 1.15; color: var(--ink); margin-bottom: 12px;
+}
+.lc-hd p { font-size: 16px; color: var(--ink3); line-height: 1.7 }
+
+/* Local context — the unique part of every page. */
+.lc-context { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px }
+.lc-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  padding: 28px 28px 26px; box-shadow: var(--sh);
+}
+.lc-card h2, .lc-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 700; line-height: 1.25; letter-spacing: -.02em;
+  color: var(--ink); margin-bottom: 12px;
+}
+.lc-card p { font-size: 15.5px; line-height: 1.75; color: var(--ink2) }
+.lc-card p + p { margin-top: 12px }
+
+/* Modules / promises / checklist grids */
+.lc-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;
+}
+.lc-grid li {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 20px 20px 18px; transition: border-color .25s, transform .25s;
+}
+.lc-grid li:hover { border-color: var(--p300); transform: translateY(-2px) }
+.lc-grid h3 {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; color: var(--ink); margin-bottom: 6px;
+}
+.lc-grid p { font-size: 14px; line-height: 1.65; color: var(--ink3) }
+.lc-grid.is-numbered { counter-reset: lc }
+.lc-grid.is-numbered h3::before {
+  counter-increment: lc; content: counter(lc, decimal-leading-zero);
+  display: block; font-size: 11.5px; font-weight: 700; letter-spacing: .12em;
+  color: var(--p600); margin-bottom: 8px;
+}
+.lc-more {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 22px;
+  font-size: 14.5px; font-weight: 600; color: var(--p700); text-decoration: none;
+}
+.lc-more:hover { text-decoration: underline; text-underline-offset: 3px }
+
+/* Links to other location pages */
+.lc-links {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;
+}
+.lc-links a {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 15px 18px; border-radius: 14px;
+  background: var(--card); border: 1.5px solid var(--line);
+  font-size: 15px; font-weight: 600; color: var(--ink); text-decoration: none;
+  transition: border-color .2s, color .2s, transform .2s;
+}
+.lc-links a::after { content: '→'; color: var(--p500); transition: transform .2s }
+.lc-links a:hover { border-color: var(--p400); color: var(--p700); transform: translateY(-2px) }
+.lc-links a:hover::after { transform: translateX(3px) }
+.lc-links small { display: block; font-size: 12.5px; font-weight: 500; color: var(--ink3); margin-top: 2px }
+
+/* Hub: one block per state */
+.lc-states { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px }
+.lc-state {
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  padding: 22px 22px 20px;
+}
+.lc-state h3 { font-family: 'Playfair Display', serif; font-size: 21px; font-weight: 700; margin-bottom: 4px }
+.lc-state h3 a { color: var(--ink); text-decoration: none }
+.lc-state h3 a:hover { color: var(--p700) }
+.lc-state p { font-size: 13px; color: var(--ink3); margin-bottom: 14px }
+.lc-state ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px }
+.lc-state li a {
+  display: inline-block; font-size: 13.5px; font-weight: 600;
+  padding: 6px 12px; border-radius: var(--rpill);
+  background: var(--p100); color: var(--p700); text-decoration: none;
+  transition: background .2s, color .2s;
+}
+.lc-state li a:hover { background: var(--p700); color: #fff }
+html[data-theme="dark"] .lc-state li a:hover { color: var(--p900) }
+
+/* FAQ — native <details>, so the answers are in the HTML for crawlers. */
+.lc-faq {
+  border: 1px solid var(--line); border-radius: 14px; background: var(--card);
+  margin-bottom: 12px; overflow: hidden;
+}
+.lc-faq summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 22px; font-size: 16px; font-weight: 700; color: var(--ink);
+}
+.lc-faq summary::-webkit-details-marker { display: none }
+.lc-faq summary::after {
+  content: '+'; flex-shrink: 0; font-size: 22px; font-weight: 400; line-height: 1;
+  color: var(--p600); transition: transform .2s;
+}
+.lc-faq[open] summary::after { transform: rotate(45deg) }
+.lc-faq summary:hover { color: var(--p700) }
+.lc-faq p { padding: 0 22px 20px; font-size: 15.5px; line-height: 1.75; color: var(--ink2) }
+
+/* Closing call to action */
+.lc-band {
+  background: linear-gradient(150deg, var(--p900) 0%, #3f2885 55%, #5d3fb8 100%);
+  padding: 72px 0; text-align: center; color: #fff;
+}
+html[data-theme="dark"] .lc-band { background: linear-gradient(150deg, #0b0714 0%, #251552 60%, #31224f 100%) }
+.lc-band h2 {
+  font-family: 'Playfair Display', serif; color: #fff;
+  font-size: clamp(28px, 3.4vw, 42px); font-weight: 800; letter-spacing: -.03em; margin-bottom: 14px;
+}
+.lc-band p { color: rgba(255, 255, 255, .72); font-size: 16.5px; line-height: 1.7; max-width: 620px; margin: 0 auto 28px }
+.lc-band .lc-actions { justify-content: center; margin-top: 0 }
+.lc-band .lc-btn { background: #fff; color: #251552; box-shadow: 0 8px 26px rgba(0, 0, 0, .2) }
+.lc-band .lc-btn:hover { background: #f1ecff }
+.lc-band .lc-btn-ghost { background: rgba(255, 255, 255, .1); color: #fff; border-color: rgba(255, 255, 255, .35) }
+.lc-band .lc-btn-ghost:hover { border-color: #fff }
+
+/* ══════════════════════════════════════
+   JOB PAGE — /career/<role>
+══════════════════════════════════════ */
+.jb-article { max-width: 820px; margin: 0 auto; padding: 44px 24px 88px }
+.jb-article .lc-crumbs ol { margin-bottom: 26px }
+.jb-article h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(30px, 4.2vw, 46px); font-weight: 800;
+  line-height: 1.08; letter-spacing: -.03em; margin: 10px 0 18px; color: var(--ink);
+}
+.jb-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px }
+.jb-tag {
+  font-size: 12.5px; font-weight: 600; padding: 5px 12px; border-radius: var(--rpill);
+  background: var(--p100); color: var(--p700);
+}
+.jb-tag.is-loc { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0 }
+html[data-theme="dark"] .jb-tag.is-loc { background: rgba(34, 197, 94, .12); color: #86efac; border-color: rgba(134, 239, 172, .25) }
+.jb-meta { font-size: 14px; color: var(--ink3); margin-bottom: 26px }
+.jb-filled {
+  padding: 16px 20px; border-radius: 14px; margin-bottom: 26px;
+  background: var(--p100); color: var(--ink2); font-size: 15px; line-height: 1.6;
+  border: 1px solid var(--line);
+}
+.jb-apply {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px;
+  padding: 22px 24px; margin: 34px 0 0; border-radius: 18px;
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--sh);
+}
+.jb-apply p { flex: 1 1 260px; font-size: 15px; color: var(--ink2); line-height: 1.6 }
+.jb-about { margin-top: 44px; padding-top: 30px; border-top: 1px solid var(--line) }
+.jb-about h2, .jb-others h2 {
+  font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700;
+  color: var(--ink); margin-bottom: 12px;
+}
+.jb-about p { font-size: 15.5px; line-height: 1.75; color: var(--ink2) }
+.jb-others { margin-top: 40px }
+
+/* ══════════════════════════════════════
+   BLOG POST — closing call to action
+══════════════════════════════════════ */
+.bl-cta {
+  margin-top: 48px; padding: 30px 30px 28px; border-radius: 20px;
+  background: linear-gradient(160deg, #f8f6ff 0%, #f1ecff 55%, #ede8ff 100%);
+  border: 1px solid var(--line);
+}
+html[data-theme="dark"] .bl-cta { background: linear-gradient(160deg, #171126 0%, #211735 100%) }
+.bl-cta h2 {
+  font-family: 'Playfair Display', serif; font-size: 25px; font-weight: 700;
+  letter-spacing: -.02em; color: var(--ink); margin-bottom: 8px;
+}
+.bl-cta p { font-size: 15.5px; line-height: 1.7; color: var(--ink2) }
+.bl-cta .lc-actions { margin-top: 18px }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .lc-wrap { padding: 0 24px }
+  .lc-hero { padding: 28px 0 48px }
+  .lc-sec { padding: 52px 0 }
+  .lc-context { grid-template-columns: 1fr }
+}
+@media (max-width: 560px) {
+  .lc-facts { grid-template-columns: 1fr; padding: 18px }
+  .lc-actions .lc-btn, .lc-actions .lc-btn-ghost { flex: 1 1 100%; justify-content: center }
+  .lc-card { padding: 22px 20px }
+  .lc-faq summary { padding: 16px 18px; font-size: 15px }
+  .lc-faq p { padding: 0 18px 18px }
+  .jb-article { padding: 32px 18px 64px }
+  .bl-cta { padding: 24px 20px 22px }
+}

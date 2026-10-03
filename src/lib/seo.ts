@@ -1,4 +1,13 @@
 import { cache } from "react";
+import { employmentTypes, hasContent, parseJobLocation, type Job } from "@/lib/jobs";
+import {
+  HUB,
+  LOCATIONS_HUB,
+  placePath,
+  plainName,
+  trailFor,
+  type Place,
+} from "@/lib/locations";
 
 // ── Site identity ─────────────────────────────────────────────────────────
 // Canonical production origin. The site also answers on www.aksharum.com,
@@ -38,6 +47,25 @@ export const FEATURE_LIST = [
   "Transport management",
   "Library management",
   "HR & payroll",
+  "Parent-teacher communication",
+];
+
+// Public contact details — keep in sync with the /contact page. Used in
+// Organization structured data, which feeds Google's knowledge panel; a phone
+// number that disagrees with the one on the site weakens that signal.
+export const ORG_PHONE = "+91-7595963707";
+export const ORG_EMAIL = "admin@aksharum.com";
+
+// Topics the organisation is an authority on (Organization.knowsAbout).
+const KNOWS_ABOUT = [
+  "School ERP",
+  "School management software",
+  "Student information systems",
+  "School fee management",
+  "Student attendance management",
+  "Online examinations",
+  "Report cards",
+  "School transport management",
   "Parent-teacher communication",
 ];
 
@@ -109,7 +137,7 @@ function organizationNode(site: SiteInfo | null): Json {
   const emailLink = (site?.social ?? []).find((s) =>
     s.url.toLowerCase().startsWith("mailto:"),
   );
-  const email = emailLink?.url.replace(/^mailto:/i, "");
+  const email = emailLink?.url.replace(/^mailto:/i, "") || ORG_EMAIL;
   const logo = site?.logoUrl ? absoluteUrl(site.logoUrl) : DEFAULT_OG_IMAGE;
 
   return {
@@ -119,18 +147,24 @@ function organizationNode(site: SiteInfo | null): Json {
     url: `${SITE_URL}/`,
     logo,
     description: DEFAULT_DESCRIPTION,
+    slogan: SITE_TAGLINE,
+    knowsAbout: KNOWS_ABOUT,
+    areaServed: { "@type": "Country", name: "India" },
     ...(sameAs.length ? { sameAs } : {}),
-    ...(email
-      ? {
-          contactPoint: {
-            "@type": "ContactPoint",
-            email,
-            contactType: "customer support",
-            areaServed: "IN",
-            availableLanguage: ["English", "Hindi"],
-          },
-        }
-      : {}),
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: ORG_PHONE,
+      email,
+      contactType: "sales",
+      areaServed: "IN",
+      availableLanguage: ["English", "Hindi"],
+      hoursAvailable: {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        opens: "09:00",
+        closes: "18:00",
+      },
+    },
   };
 }
 
@@ -160,6 +194,28 @@ function softwareNode(site: SiteInfo | null): Json {
     publisher: { "@id": ORG_ID },
     featureList: FEATURE_LIST,
   };
+}
+
+/** BreadcrumbList for any depth of trail (site paths, made absolute). */
+function trailNode(trail: { name: string; path: string }[], id?: string): Json {
+  return {
+    "@type": "BreadcrumbList",
+    ...(id ? { "@id": id } : {}),
+    itemListElement: trail.map((step, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: step.name,
+      item: absoluteUrl(step.path),
+    })),
+  };
+}
+
+function faqEntities(faqs: { q: string; a: string }[]): Json[] {
+  return faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  }));
 }
 
 function breadcrumbNode(name: string, canonical: string): Json {
@@ -194,6 +250,18 @@ interface BlogSeoPost {
   tags: string[];
   publishedAt: string | null;
   updatedAt: string;
+}
+
+/** Posts bylined with the brand are by the Organization, not a person. */
+function authorNode(author: string, site: SiteInfo | null): Json {
+  const brand = (site?.siteName || SITE_NAME).toLowerCase();
+  const name = author.trim();
+  if (!name || name.toLowerCase() === brand || name.toLowerCase() === SITE_NAME.toLowerCase()) {
+    // Named inline as well as by @id: Google's article guidelines want
+    // author.name present on the author itself.
+    return { "@type": "Organization", "@id": ORG_ID, name: site?.siteName || SITE_NAME, url: `${SITE_URL}/` };
+  }
+  return { "@type": "Person", name };
 }
 
 function blogBreadcrumb(post?: BlogSeoPost): Json {
@@ -238,7 +306,7 @@ export function buildBlogListJsonLd(args: {
           ...(p.excerpt ? { description: p.excerpt } : {}),
           datePublished: p.publishedAt ?? undefined,
           dateModified: p.updatedAt,
-          author: { "@type": "Person", name: p.author },
+          author: authorNode(p.author, site),
         })),
       },
       blogBreadcrumb(),
@@ -270,7 +338,7 @@ export function buildBlogPostJsonLd(args: {
         image: [image],
         datePublished: post.publishedAt ?? undefined,
         dateModified: post.updatedAt,
-        author: { "@type": "Person", name: post.author },
+        author: authorNode(post.author, site),
         publisher: { "@id": ORG_ID },
         isPartOf: { "@id": BLOG_ID },
         ...(post.tags.length ? { keywords: post.tags.join(", ") } : {}),
@@ -303,4 +371,179 @@ export function buildJsonLd(args: {
   }
 
   return { "@context": "https://schema.org", "@graph": graph };
+}
+
+// ── Location pages (/school-erp/...) ────────────────────────────────────────
+
+/** schema.org Place for where a location page's service is offered. */
+function areaNode(place: Place): Json {
+  const country = { "@type": "Country", name: place.country };
+  if (place.kind === "country") return country;
+  const state = { "@type": "State", name: place.region, containedInPlace: country };
+  if (place.kind === "state") return { ...state, name: place.name };
+  return {
+    "@type": "City",
+    name: plainName(place),
+    ...(place.alias ? { alternateName: place.alias } : {}),
+    containedInPlace: state,
+  };
+}
+
+/**
+ * @graph for one location page: the page itself (an FAQPage, so its visible
+ * Q&A is machine-readable), the school ERP service it describes with the
+ * area it serves, and the Home › School ERP › State › City trail.
+ */
+export function buildPlaceJsonLd(args: { place: Place; site: SiteInfo | null }): Json {
+  const { place, site } = args;
+  const url = absoluteUrl(placePath(place.slug));
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(site),
+      websiteNode(site),
+      {
+        "@type": "FAQPage",
+        "@id": `${url}#webpage`,
+        url,
+        name: place.title,
+        description: place.description,
+        inLanguage: "en-IN",
+        isPartOf: { "@id": SITE_ID },
+        about: { "@id": `${url}#service` },
+        breadcrumb: { "@id": `${url}#breadcrumb` },
+        mainEntity: faqEntities(place.faqs),
+      },
+      {
+        "@type": "Service",
+        "@id": `${url}#service`,
+        name: `School ERP software in ${plainName(place)}`,
+        serviceType: "School ERP software",
+        description: place.description,
+        url,
+        provider: { "@id": ORG_ID },
+        areaServed: areaNode(place),
+        audience: { "@type": "EducationalAudience", educationalRole: "administrator" },
+      },
+      trailNode(trailFor(place), `${url}#breadcrumb`),
+    ],
+  };
+}
+
+/** @graph for the /school-erp hub: FAQ page + the list of location pages. */
+export function buildHubJsonLd(args: { places: Place[]; site: SiteInfo | null }): Json {
+  const { places, site } = args;
+  const url = absoluteUrl(LOCATIONS_HUB);
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(site),
+      websiteNode(site),
+      {
+        "@type": "FAQPage",
+        "@id": `${url}#webpage`,
+        url,
+        name: HUB.title,
+        description: HUB.description,
+        inLanguage: "en-IN",
+        isPartOf: { "@id": SITE_ID },
+        breadcrumb: { "@id": `${url}#breadcrumb` },
+        mainEntity: faqEntities(HUB.faqs),
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${url}#locations`,
+        name: "School ERP software by location",
+        itemListElement: places.map((place, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: `School ERP software in ${plainName(place)}`,
+          url: absoluteUrl(placePath(place.slug)),
+        })),
+      },
+      trailNode(
+        [
+          { name: "Home", path: "/" },
+          { name: "School ERP", path: LOCATIONS_HUB },
+        ],
+        `${url}#breadcrumb`,
+      ),
+    ],
+  };
+}
+
+// ── Job pages (/career/...) ─────────────────────────────────────────────────
+
+/**
+ * @graph for an open role: a JobPosting that makes it eligible for Google's
+ * job search experience, plus Home › Careers › Role. Only call this for OPEN
+ * roles — Google requires expired postings to drop the markup.
+ */
+export function buildJobPostingJsonLd(args: { job: Job; site: SiteInfo | null }): Json {
+  const { job, site } = args;
+  const url = absoluteUrl(job.path);
+  const where = parseJobLocation(job.location);
+  const types = employmentTypes(job.type, job.title);
+  const name = site?.siteName || SITE_NAME;
+  const description = hasContent(job.description)
+    ? job.description
+    : `<p>${job.title} (${job.type || "Full-time"}, ${job.location || "India"}) in our ${
+        job.department ? `${job.department} team` : "team"
+      } at ${name}, the team building a modern school ERP.</p>`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationNode(site),
+      {
+        "@type": "JobPosting",
+        "@id": `${url}#job`,
+        url,
+        title: job.title,
+        description,
+        datePosted: job.createdAt,
+        identifier: { "@type": "PropertyValue", name, value: job.id },
+        hiringOrganization: {
+          "@type": "Organization",
+          "@id": ORG_ID,
+          name,
+          sameAs: `${SITE_URL}/`,
+          logo: site?.logoUrl ? absoluteUrl(site.logoUrl) : DEFAULT_OG_IMAGE,
+        },
+        employmentType: types.length === 1 ? types[0] : types,
+        industry: "Education Technology",
+        directApply: true,
+        ...(job.openings > 1 ? { totalJobOpenings: job.openings } : {}),
+        ...(where.addresses.length
+          ? {
+              jobLocation: where.addresses.map((a) => ({
+                "@type": "Place",
+                address: {
+                  "@type": "PostalAddress",
+                  ...(a.locality ? { addressLocality: a.locality } : {}),
+                  ...(a.region ? { addressRegion: a.region } : {}),
+                  addressCountry: a.countryCode,
+                },
+              })),
+            }
+          : {}),
+        ...(where.remote
+          ? {
+              jobLocationType: "TELECOMMUTE",
+              applicantLocationRequirements: where.countries.map((c) => ({
+                "@type": "Country",
+                name: c,
+              })),
+            }
+          : {}),
+      },
+      trailNode([
+        { name: "Home", path: "/" },
+        { name: "Careers", path: "/career" },
+        { name: job.title, path: job.path },
+      ]),
+    ],
+  };
 }

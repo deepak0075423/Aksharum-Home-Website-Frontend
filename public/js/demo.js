@@ -78,6 +78,11 @@ const htl = gsap.timeline({delay:.1});
 htl.fromTo('#dmEy',{opacity:0,y:16},{opacity:1,y:0,duration:.6,ease:'power3.out'})
    .fromTo('#dmH1',{opacity:0,y:36},{opacity:1,y:0,duration:1,ease:'power3.out'},'-=.4')
    .fromTo('#dmSub',{opacity:0,y:24},{opacity:1,y:0,duration:.8,ease:'power3.out'},'-=.6');
+// Crawlers and headless renderers often don't run requestAnimationFrame, which
+// would leave the hero frozen at opacity 0 — its text invisible to search
+// engines. Snap to the end state if the intro hasn't finished on its own.
+setTimeout(function(){ if(htl.progress && htl.progress() < 1) htl.progress(1); }, 3000);
+
 
 /* CARDS */
 gsap.fromTo('#card1,#card2',{opacity:0,y:40,scale:.97},{opacity:1,y:0,scale:1,stagger:.14,duration:.9,ease:'power3.out',scrollTrigger:{trigger:'.demo-wrap',start:'top 80%',once:true}});

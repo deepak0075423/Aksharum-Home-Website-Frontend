@@ -2714,12 +2714,12 @@ html[data-theme="dark"] .cr-modal-x:hover{background:rgba(255,255,255,.08);color
 .cr-modal-desc pre code{background:none;border:none;padding:0}
 .cr-modal-desc img{max-width:100%;height:auto;border-radius:12px;margin:6px 0 14px}
 .cr-modal-empty{color:var(--ink3);font-style:italic}
-.cr-modal-foot{display:flex;justify-content:flex-end}
+.cr-modal-foot{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:10px}
 .cr-modal-apply{cursor:pointer}
 
 @media (max-width:560px){
   .cr-modal{padding:30px 22px 26px;border-radius:18px;max-height:92vh}
   .cr-modal-title{font-size:22px}
   .cr-modal-foot{justify-content:stretch}
-  .cr-modal-apply{width:100%;justify-content:center}
+  .cr-modal-apply,.cr-modal-page{width:100%;justify-content:center}
 }
